@@ -1,12 +1,13 @@
 // n, r을 입력받아 순열, 중복 순열, 조합, 중복 조합
 // n, r값 정수
 // 0 < r =< n
+// 팩토리얼 값 -> unsigned long long으로 오버플로우 최대한 방지
 
 #include <stdio.h>
 
 int factorial(int num)
 {
-    int result = 1;
+    unsigned long long result = 1;
 
     for (int i = 1; i <= num; i++)
     {
@@ -18,7 +19,7 @@ int factorial(int num)
 void main()
 {
     float n, r;
-    int answer;
+    unsigned long long answer;
 
     printf("순열, 중복 순열, 조합, 중복 조합 값 구하기");
     printf("\n입력값 예시) 4 2\n");
@@ -45,7 +46,7 @@ void main()
     {
 
         // 순열
-        if (factorial(n - int_r) == 0)
+        if (factorial(n - r) == 0)
         {
             printf("\n(n - r)! = 0");
             return;
