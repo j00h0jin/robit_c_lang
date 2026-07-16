@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 
-int factorial(int num)
+unsigned long long factorial(int num)
 {
     unsigned long long result = 1;
 
