@@ -1,5 +1,4 @@
 // 동일한 문자가 여러 번 있는 경우 구간마다 표시
-// 공백 없는 문자열 받는다고 가정
 // ex abab12ab12
 // subStr 12
 // 첫번째 12는 5~6번째(인덱스 4~5), 두번째 12는 9~10번째
@@ -17,7 +16,9 @@ void main()
     int inptLen = 0, subLen = 0;
 
     printf("최대 99개 문자 입력 <inputStr> : ");
-    scanf(" %s", &inputStr);
+    // [^\n] => [] 괄호 안에 문자를 읽기 + ^(Not)\n(줄바꿈)
+    // = 줄바꿈 외 문자 읽기
+    scanf(" %[^\n]", &inputStr);
 
     for (int i = 0; i < 100; i++)
     {
@@ -27,7 +28,7 @@ void main()
     }
 
     printf("찾는 문자열 <subStr> : ");
-    scanf(" %s", &subStr);
+    scanf(" %[^\n]", &subStr);
 
     for (int i = 0; i < 100; i++)
     {
