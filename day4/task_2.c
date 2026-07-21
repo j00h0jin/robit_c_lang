@@ -22,9 +22,11 @@ void main()
     int cnt;
     scanf("%d ", &cnt);
 
+    // input값만큼 좌표 list 동적할당
     Coordinate *list;
     list = (Coordinate *)malloc(sizeof(Coordinate) * cnt);
 
+    // input 개수만큼 x y 좌표 받기
     for (int i = 0; i < cnt; i++)
     {
         scanf(" %d %d", &list[i].x, &list[i].y);
@@ -34,16 +36,19 @@ void main()
     float d_max = 0;
     int m;
 
+    // 좌표들의 거리 총합을 구함
     for (int i = 0; i < cnt; i++)
     {
         d_total = 0;
         for (int j = 0; j < cnt; j++)
         {
+            // 두 점 사이의 거리 공식 ((x2 - x1)^2 + (y2 - y1)^2)^(1/2) 사용
             float squareXY = pow((list + j)->x - (list + i)->x, 2) + pow((list + j)->y - (list + i)->y, 2);
             d_total += sqrt(squareXY);
         }
         if (d_total > d_max)
         {
+            // total 거리가 가장 긴 값을 max에 저장하고 해당 index를 m에 저장
             d_max = d_total;
             m = i;
         }
