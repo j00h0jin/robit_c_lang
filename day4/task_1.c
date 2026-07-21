@@ -86,6 +86,6 @@ void main()
 
 char lower(char c)
 {
-    if (c >= 'A' || c <= 'Z')
+    if (c >= 'A' && c <= 'Z')
         return c + 32;
 }
