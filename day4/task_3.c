@@ -7,7 +7,6 @@
 아닌 경우 0
 */
 
-// 작업중
 #include <stdio.h>
 #include <stdlib.h>
 
