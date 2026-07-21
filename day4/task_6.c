@@ -16,12 +16,6 @@ ex) 3
 5135
 1351
 
-그 다음 4
-3514
-3514
-3514
-3514
-
 ...
 
 포인터 사용
@@ -40,29 +34,33 @@ void main()
         arr[i] = (int *)malloc(sizeof(int) * 4);
     }
 
+    // 보기가 3x4 배열이여서 최대 12개가 들어가는 pattern 선언
     int pattern[12] = {0};
+    // 패턴에 몇개의 숫자가 들어갔는지 확인
+    int idx = 0;
 
-    while (pattern[12] == 0)
+    // 숫자는 양의 정수(자연수)라 가정
+    while (pattern[11] == 0)
     {
-        int idx = 0;
         int input_num;
         printf("input: ");
         scanf(" %d", &input_num);
 
+        // 패턴에 해당 숫자 추가해줌
         pattern[idx++] = input_num;
-
-        int k = 0;
 
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 4; j++)
             {
-                *(*(arr + i) + j) = pattern[k <= idx ? k++ : k - idx];
+                int k = i * 4 + j;                    // k는 현재 위치
+                *(*(arr + i) + j) = pattern[k % idx]; // k % idx로 패턴이 무한으로 돌게 해줌
             }
         }
 
         printf("\n");
 
+        // 출력
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 4; j++)
