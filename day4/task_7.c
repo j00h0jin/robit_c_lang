@@ -58,6 +58,9 @@ void main()
 
     char str[30];
 
+    printf("get_entry 시 idx 또는 data 입력\n");
+    printf("ex) get_entry idx 3\n");
+
     while (1)
     {
         printf("입력: ");
@@ -322,12 +325,50 @@ void delete(LinkedList *list, int index)
     printf("인덱스 %d의 %d 삭제\n", index, deleted_val);
 }
 
-// 작업중
 void get_entry(LinkedList *list)
 {
+    char type[10];
+    int val;
+    scanf("%s %d", type, &val);
+    // type으로 idx와 data 구분
+    if (my_strcmp(type, "idx") == 0) // index 경우
+    {
+        if (val < 0 || val >= list->size)
+        {
+            printf("인덱스 범위를 벗어남\n");
+            return;
+        }
+        // head부터 입력받은 idx까지 이동
+        Node *curr = list->head;
+        for (int i = 0; i < val; i++)
+            curr = curr->next;
+        printf("Index %d의 값: %d\n", val, curr->data);
+    }
+    else if (my_strcmp(type, "data") == 0) // data 경우
+    {
+        // head부터 입력 받은 data가 있을 때까지 탐색
+        Node *curr = list->head;
+        int idx = 0;
+        while (curr != NULL)
+        {
+            if (curr->data == val)
+            {
+                // 값을 찾았다면 return
+                printf("값 %d의 Index: %d\n", val, idx);
+                return;
+            }
+            curr = curr->next;
+            idx++;
+        }
+        // while문이 끝까지 돈 경우 data가 일치하는 경우가 없으므로 메세지 출력
+        printf("값 %d를 찾을 수 없음\n", val);
+    }
+    else
+    {
+        printf("get_entry (idx/data) n 형식으로 입력\n");
+    }
 }
 
-// 작업중
 void reverse(LinkedList *list)
 {
     // 빈 리스트 or 리스트 노드 1개일 때는 뒤집을 필요 X
@@ -338,7 +379,7 @@ void reverse(LinkedList *list)
     }
 
     Node *prev = NULL;       // 이전 노드 저장할 곳
-    Node *curr = list->head; // 현재 위치(head)
+    Node *curr = list->head; // 현재 위치(시작점)
     Node *next = NULL;       // 다음 노드 저장할 곳
 
     list->tail = list->head; // 기존 head가 tail이 됨(뒤집으면)
@@ -346,12 +387,50 @@ void reverse(LinkedList *list)
     while (curr != NULL)
     {
         next = curr->next; // next에 다음 노드 저장
-        curr->next = prev; // 다음 노드의 next를 이전 노드를 향하게 함
-        prev = curr;       //
-        curr = next;
+        curr->next = prev; // 현재 노드의 next를 이전 노드를 향하게 함
+        prev = curr;       // (다음 노드의 이전 노드)는 (현재 노드)이므로 prev에 현재 노드를 넣어줌
+        curr = next;       // 현재 노드를 while문 첫줄에 저장된 다음 노드로 지정
     }
 
     list->head = prev; // 뒤집힌 후 첫 노드가 head가 됨
+
+    /*
+    ex) [10] -> [20] -> [30] // reverse 하기
+    curr = [10]
+
+    list -> tail = [10]
+
+    while 1회차
+    next = [20]([10]->next)
+    [10]->next = NULL
+    prev = [10]
+    curr = [20]
+
+    NULL <- (tail)[10](prev) (끊어짐) [20](curr) -> [30] -> NULL
+
+    2회차 curr = [20], prev = [10]
+    next = [30]([20]->next)
+    [20]->next = [10]
+    prev = [20]
+    curr = [30]
+
+    NULL <- (tail)[10](prev) <- [20](prev) (끊어짐) [30](curr) -> NULL
+
+    3회차 curr = [30], prev = [20]
+    next = NULL([30]->next)
+    [30]->next = [20]
+    prev = [30]
+    curr = NULL
+
+    NULL <- (tail)[10](prev) <- [20] <- [30](prev) (끊어짐) NULL(curr)
+
+    4회차 조건 성립 X
+
+    list->head = [30]
+
+    NULL <- (tail)[10](prev) <- [20] <- (head)[30](prev) (끊어짐) NULL(curr)
+
+    */
     printf("완료\n");
 }
 
