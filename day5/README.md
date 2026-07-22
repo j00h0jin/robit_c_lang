@@ -216,7 +216,7 @@ int main()
 
 구조체도 변수를 담은 구조이기 때문에 주소값이 존재한다. 따라서 구조체를 가리키는 포인터를 선언할 수 있다.
 
-```Ｃ
+```c
 #include <stdio.h>
 
 typedef struct _Student{
