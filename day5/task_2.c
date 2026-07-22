@@ -59,6 +59,7 @@ void print(int *row, int *col, int **pArr)
 
 void arr_ij(int *sizeRow, int *sizeCol, int **pArr)
 {
+    // day 3 task 3 로직 활용
     int r = *sizeRow;
     int c = *sizeCol;
     int size = r * c;
@@ -66,32 +67,62 @@ void arr_ij(int *sizeRow, int *sizeCol, int **pArr)
 
     while (k <= size)
     {
-        while (j < c - temp && k <= size)
+        // 우
+        while (j < c - temp && k <= size) // 우측 끝까지 && k가 size보다 같거나 작을 때
         {
-            *(*(pArr + i) + j) = k++;
-            j++;
+            *(*(pArr + i) + j) = k++; // 해당 칸에 k를 채우고 k++;
+            j++;                      // 우로 이동
         }
         j--, i++;
-        while (i < r - temp && k <= size)
+        // 하
+        while (i < r - temp && k <= size) // 하단 끝까지 && k가~(위 동일)
         {
             *(*(pArr + i) + j) = k++;
-            i++;
+            i++; // 하로 이동
         }
+        // 좌
         j--, i--;
-        while (j >= 0 + temp && k <= size)
+        while (j >= 0 + temp && k <= size) // 좌측 끝까지 && k가~
         {
             *(*(pArr + i) + j) = k++;
-            j--;
+            j--; // 좌로 이동
         }
+        // 상
         j++, i--;
-        while (i >= 1 + temp && k <= size)
+        while (i >= 1 + temp && k <= size) // 상단 끝까지 && k가~
         {
             *(*(pArr + i) + j) = k++;
-            i--;
+            i--; // 상으로 이동
         }
         j++, i++;
+        // 한 바퀴를 돌았다면 temp++ (이전 사이클보다 상하좌우가 한칸씩 줄었으므로)
         temp++;
     }
+    /*
+    ex)
+    5 by 5
+    (k가 움직이면 원래 있던 자리에 숫자가 채워짐)
+    k0000
+    00000
+    00000
+    00000
+    우측 끝까지 이동
+    =>
+    12345k
+    00000
+    00000
+    00000
+    j--,i++ // 숫자 채우지 않고 이동 좌 1칸, 하 1칸
+
+    =>
+    12345
+    0000k
+    00000
+    00000
+    하단 끝까지 이동
+
+    ...
+    */
 
     printf("\n");
     // arr_ij에서 받아온 값이 포인터이므로 그대로 넣어줌
