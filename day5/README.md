@@ -134,6 +134,9 @@ int main()
 }
 ```
 
+
+배열은 주소값을 가지기 때문에 포인터처럼 넘겨지게 된다.
+
 ---
 
 ### 포인터와 배열
@@ -207,7 +210,56 @@ int main()
 
 <img width="1268" height="1634" alt="image" src="https://github.com/user-attachments/assets/b0501b9b-01bc-4d7a-a3e9-5e1ba8018ac0" />
 
+이중 포인터를 사용하는 경우
 
+> 함수 안에서 포인터 값을 변경할 때
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void allocateMemory(int **p) 
+{
+    *p = (int *)malloc(sizeof(int));
+    // 
+}
+
+int main()
+{
+    int *ptr = NULL;
+    allocateMemory(&ptr); // ptr의 주소를 넘김
+    *ptr = 10;            
+}
+```
+
+> 2차원 배열 동적 할당
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void main()
+{
+    int **arr;
+    int x, y;
+
+    printf("input x : ");
+    scanf(" %d", &x);
+    printf("input y : ");
+    scanf(" %d", &y);
+
+    arr = (int **)malloc(sizeof(int *) * y); // 배열의 주소들을 담은 포인터
+    for (int i = 0; i < y; i++)
+    {
+        arr[i] = (int *)malloc(sizeof(int) * x);
+    }
+}
+```
+
+<img width="1292" height="1514" alt="image" src="https://github.com/user-attachments/assets/67c65cd1-6291-4ba7-922a-7609b2a431c8" />
+
+
+
+> 문자열 배열을 다룰 때(문자열이 이미 배열이기 때문에 배열을 담은 배열) 등...
 
 
 ---
