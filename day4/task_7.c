@@ -414,7 +414,7 @@ void reverse(LinkedList *list)
     prev = [20]
     curr = [30]
 
-    NULL <- (tail)[10](prev) <- [20](prev) (끊어짐) [30](curr) -> NULL
+    NULL <- (tail)[10] <- [20](prev) (끊어짐) [30](curr) -> NULL
 
     3회차 curr = [30], prev = [20]
     next = NULL([30]->next)
@@ -422,13 +422,13 @@ void reverse(LinkedList *list)
     prev = [30]
     curr = NULL
 
-    NULL <- (tail)[10](prev) <- [20] <- [30](prev) (끊어짐) NULL(curr)
+    NULL <- (tail)[10] <- [20] <- [30](prev) (끊어짐) NULL(curr)
 
     4회차 조건 성립 X
 
     list->head = [30]
 
-    NULL <- (tail)[10](prev) <- [20] <- (head)[30](prev) (끊어짐) NULL(curr)
+    NULL <- (tail)[10] <- [20] <- (head)[30](prev) (끊어짐) NULL(curr)
 
     */
     printf("완료\n");
