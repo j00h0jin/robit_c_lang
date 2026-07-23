@@ -1,7 +1,7 @@
 /*
 과제 5
 출석부 프로그램
-• Student 구조체 : 번호, 이름, 주소(format : 나라,도,시,구), 성적
+• Student 구조체 : 번호, 이름, 주소(format : 나라,도,시,구), 성적 // 중첩
 • 구조체 배열, 구조체 포인터를 이용한 함수 이용
 • 모든 항목 예외처리(ex 숫자, 문자) • 필수 기능)
 1. 학생 정렬 기능
@@ -15,6 +15,23 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+
+typedef struct _Address
+{
+    char country;
+    char state; // 도
+    char city;  // 시
+    char ward;  // 구
+} Address;
+
+typedef struct _Student
+{
+    int s_num;
+    char name;
+    Address ADDRESS;
+    int gpa; // gpa/4.5
+} Student;
 
 void main()
 {

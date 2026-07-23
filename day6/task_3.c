@@ -13,6 +13,9 @@ day 4 task 7, day 6 task 2 참조
 queue
 
 ++ 처음에 front와 rear를 반대로 놓고 주석과 코드를 짠 뒤 수정해서 혹시 놓친 주석이 있으면 주석 설명이 반대일 수 있음
+
+++ rear가 새 노드를 가리켜야 한다고 함
+지금 next의 완전 반대 방향(수정 필요)
 */
 
 #include <stdio.h>
