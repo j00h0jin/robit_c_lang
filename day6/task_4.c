@@ -16,7 +16,7 @@ i) 문자열을 받아 스택에 넣음
 ii) 스택에서 큐로 엔큐함
 
     ---------
-    e d c b a
+    e d c b a(front)
     ---------
 
 iii) 문자열과 queue의 front부터 비교
@@ -64,26 +64,41 @@ void main()
 
     char str[30];
     printf("문자열 입력(최대 30자): ");
-    scanf(" %s", str);
+    scanf(" %[^\n]", str);
 
-    int length = get_length(str);
+    char without_space[30];
+    int length = 0;
 
+    for (int i = 0; str[i] != '\0'; i++) // 받은 str 끝까지
+    {
+        if (str[i] != ' ') // 공백이 아닐 경우 저장(abb         a와 같은 경우 판별해야되므로)
+        {
+            without_space[length++] = str[i];
+        }
+    }
+    without_space[length] = '\0';
+
+    // stack에 푸시
     for (int i = 0; i < length; i++)
     {
-        push(stack_list, str[i]);
+        push(stack_list, without_space[i]);
     }
 
+    // 스택에서 큐로 엔큐(pop함수에서 pop된 값을 반환함 -> 그대로 엔큐)
     for (int i = 0; i < length; i++)
     {
         enqueue(queue_list, pop(stack_list));
     }
 
-    Node *temp = queue_list->rear;
+    // 현재 맨 위에 있는 주석 ii까지 되었음
+    // 이제 queue의 front부터 읽으면 문자열을 뒤집은 것과 동일
+    Node *temp = queue_list->front;
+    // Palindraome인지 판별
     int is_palindraome = 1;
 
     for (int i = 0; i < length; i++)
     {
-        if (str[i] != temp->data)
+        if (without_space[i] != temp->data) // 하나라도 같지 않다면 Palindraome이 아님(is_palindraome = 0)
         {
             is_palindraome = 0;
             break;
@@ -106,7 +121,7 @@ void main()
     }
     free(stack_list);
 
-    curr = queue_list->rear;
+    curr = queue_list->front;
     while (curr != NULL)
     {
         Node *temp = curr;
@@ -114,6 +129,8 @@ void main()
         free(temp);
     }
     free(queue_list);
+
+    return;
 }
 
 void init_stack_list(Stack *list)
@@ -174,7 +191,7 @@ char pop(Stack *list)
     return deleted_val;
 }
 
-void init_list(Queue *list)
+void init_queue_list(Queue *list)
 {
     list->rear = NULL;
     list->front = NULL;
@@ -197,10 +214,12 @@ void enqueue(Queue *list, int data)
     }
     else // 첫번째 노드가 아니라면
     {
-        // 새 노드의 next를 기존의 rear와 연결해주고 새 노드를 rear으로 지정
-        new_node->next = list->rear;
+        // 기존 rear의 next를 new node에 연결하고 rear를 new node에 지정
+        // new node의 next는 NULL
+        list->rear->next = new_node;
         list->rear = new_node;
+        new_node->next = NULL;
     }
     list->size++;
-    printf("enqueue %c\n", data);
+    // printf("enqueue %d\n", data);
 }
