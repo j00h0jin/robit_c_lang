@@ -11,6 +11,8 @@
 day 4 task 7, day 6 task 2 참조
 
 queue
+
+++ 처음에 front와 rear를 반대로 놓고 주석과 코드를 짠 뒤 수정해서 혹시 놓친 주석이 있으면 주석 설명이 반대일 수 있음
 */
 
 #include <stdio.h>
@@ -25,8 +27,8 @@ typedef struct Node
 
 typedef struct Queue
 {
-    Node *front;
-    Node *rear; // 나가는 쪽이 rear
+    Node *rear;
+    Node *front; // 나가는 쪽이 front
     int size;
 } Queue;
 
@@ -62,23 +64,23 @@ void main()
         {
             printf("크기: %d\n", list->size);
         }
-        else if (my_strcmp(str, "front") == 0)
-        {
-            if (list->front == NULL) // top이 없으면 비어 있다고 출력하고 continue
-            {
-                printf("EMPTY\n");
-                continue;
-            }
-            printf("front: %d\n", list->front->data);
-        }
         else if (my_strcmp(str, "rear") == 0)
         {
-            if (list->rear == NULL) // top이 없으면 비어 있다고 출력하고 continue
+            if (list->rear == NULL) // rear가 없으면 비어 있다고 출력하고 continue
             {
                 printf("EMPTY\n");
                 continue;
             }
             printf("rear: %d\n", list->rear->data);
+        }
+        else if (my_strcmp(str, "front") == 0)
+        {
+            if (list->front == NULL) // front가 없으면 비어 있다고 출력하고 continue
+            {
+                printf("EMPTY\n");
+                continue;
+            }
+            printf("front: %d\n", list->front->data);
         }
         else if (my_strcmp(str, "isEmpty") == 0 || my_strcmp(str, "isempty") == 0)
         {
@@ -113,8 +115,8 @@ int my_strcmp(char *s1, char *s2)
 // list 빈 값 초기화
 void init_list(Queue *list)
 {
-    list->front = NULL;
     list->rear = NULL;
+    list->front = NULL;
     list->size = 0;
 }
 
@@ -125,18 +127,18 @@ void enqueue(Queue *list, int data)
     new_node->data = data;
 
     // 첫번째 노드의 next는 없음
-    if (list->front == NULL)
+    if (list->rear == NULL)
     {
         // queue에서 노드가 하나인 경우 front이자 rear가 될 것
-        list->front = new_node;
         list->rear = new_node;
+        list->front = new_node;
         new_node->next = NULL;
     }
     else // 첫번째 노드가 아니라면
     {
-        // 새 노드의 next를 기존의 front와 연결해주고 새 노드를 front으로 지정
-        new_node->next = list->front;
-        list->front = new_node;
+        // 새 노드의 next를 기존의 rear와 연결해주고 새 노드를 rear으로 지정
+        new_node->next = list->rear;
+        list->rear = new_node;
     }
     list->size++;
     printf("enqueue %d\n", data);
@@ -144,37 +146,37 @@ void enqueue(Queue *list, int data)
 
 void dequeue(Queue *list)
 {
-    if (list->front == NULL)
+    if (list->rear == NULL)
     {
         printf("스택이 비어있음\n");
         return;
     }
-    int deleted_val = list->rear->data;
+    int deleted_val = list->front->data;
 
     // 노드가 1개만 있는 경우
-    if (list->front->next == NULL)
+    if (list->rear->next == NULL)
     {
         // 메모리 해제
-        free(list->front); // == free(list->rear)
+        free(list->rear); // == free(list->front)
         // front와 rear은 둘 다 지정되어 있으므로 둘 다 해제
-        list->front = NULL;
         list->rear = NULL;
+        list->front = NULL;
     }
     else
     {
-        free(list->rear);
-        // 현재 rear를 front에 지정
-        Node *curr = list->front;
+        free(list->front);
+        // 현재 rear를 curr에 지정
+        Node *curr = list->rear;
 
-        // queue의 front에서 size-1번 next로 이동하면 rear임
-        // rear은 지워줄 것이므로 rear 앞부분까지 이동한다면 (size - 1)-1번 이동
+        // queue의 rear에서 size-1번 next로 이동하면 front임
+        // front은 지워줄 것이므로 front 앞부분까지 이동한다면 (size - 1)-1번 이동
         for (int i = 0; i < (list->size - 1) - 1; i++)
         {
             curr = curr->next;
         }
-        // rear의 앞 부분을 rear로 지정해주고 next는 NULL
-        list->rear = curr;
-        list->rear->next = NULL;
+        // front의 앞 부분을 front로 지정해주고 next는 NULL
+        list->front = curr;
+        list->front->next = NULL;
     }
     list->size--;
     printf("dequeue %d\n", deleted_val);
@@ -191,7 +193,7 @@ int isEmpty(Queue *list)
 void printQueue(Queue *list)
 {
     // 현재 리스트 출력
-    Node *curr = list->front;
+    Node *curr = list->rear;
     if (curr == NULL)
     {
         printf("\nEMPTY\n");
