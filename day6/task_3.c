@@ -12,10 +12,10 @@ day 4 task 7, day 6 task 2 참조
 
 queue
 
-++ 처음에 front와 rear를 반대로 놓고 주석과 코드를 짠 뒤 수정해서 혹시 놓친 주석이 있으면 주석 설명이 반대일 수 있음
++ 처음에 front와 rear를 반대로 놓고 주석과 코드를 짠 뒤 수정해서 혹시 놓친 주석이 있으면 주석 설명이 반대일 수 있음
 
-++ rear가 새 노드를 가리켜야 한다고 함
-지금 next의 완전 반대 방향(수정 필요)
+++ rear가 새 노드를 가리켜야 한다고 함 지금 next의 완전 반대 방향(수정 완)
+
 */
 
 #include <stdio.h>
@@ -139,9 +139,11 @@ void enqueue(Queue *list, int data)
     }
     else // 첫번째 노드가 아니라면
     {
-        // 새 노드의 next를 기존의 rear와 연결해주고 새 노드를 rear으로 지정
-        new_node->next = list->rear;
+        // 기존 rear의 next를 new node에 연결하고 rear를 new node에 지정
+        // new node의 next는 NULL
+        list->rear->next = new_node;
         list->rear = new_node;
+        new_node->next = NULL;
     }
     list->size++;
     printf("enqueue %d\n", data);
@@ -151,13 +153,13 @@ void dequeue(Queue *list)
 {
     if (list->rear == NULL)
     {
-        printf("스택이 비어있음\n");
+        printf("큐가 비어있음\n");
         return;
     }
     int deleted_val = list->front->data;
 
     // 노드가 1개만 있는 경우
-    if (list->rear->next == NULL)
+    if (list->rear == list->front)
     {
         // 메모리 해제
         free(list->rear); // == free(list->front)
@@ -167,19 +169,14 @@ void dequeue(Queue *list)
     }
     else
     {
-        free(list->front);
-        // 현재 rear를 curr에 지정
-        Node *curr = list->rear;
-
-        // queue의 rear에서 size-1번 next로 이동하면 front임
-        // front은 지워줄 것이므로 front 앞부분까지 이동한다면 (size - 1)-1번 이동
-        for (int i = 0; i < (list->size - 1) - 1; i++)
-        {
-            curr = curr->next;
-        }
-        // front의 앞 부분을 front로 지정해주고 next는 NULL
-        list->front = curr;
+        // front next 임시 저장 후
+        Node *temp = list->front->next;
+        // front의 next를 끊어주고 해제
         list->front->next = NULL;
+        free(list->front);
+
+        // 저장해놓은 front의 next는 front가 됨
+        list->front = temp;
     }
     list->size--;
     printf("dequeue %d\n", deleted_val);
@@ -196,18 +193,18 @@ int isEmpty(Queue *list)
 void printQueue(Queue *list)
 {
     // 현재 리스트 출력
-    Node *curr = list->rear;
+    Node *curr = list->front;
     if (curr == NULL)
     {
         printf("\nEMPTY\n");
         return;
     }
 
-    printf("\n -> \n"); // 방향 표시
+    printf("\n <- \n"); // 방향 표시
     while (curr != NULL)
     {
         printf("%d ", curr->data);
         curr = curr->next;
     }
-    printf("\n -> \n");
+    printf("\n <- \n");
 }
