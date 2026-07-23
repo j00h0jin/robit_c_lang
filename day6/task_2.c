@@ -157,10 +157,9 @@ void pop(Stack *list)
 
         // top을 넘겼으므로 temp는 메모리 해제
         free(temp);
-
-        list->size--;
-        printf("pop %d\n", deleted_val);
     }
+    list->size--;
+    printf("pop %d\n", deleted_val);
 }
 
 int isEmpty(Stack *list)
