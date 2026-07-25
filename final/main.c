@@ -115,30 +115,36 @@ void MainView(int consoleWidth)
     ScreenBar(consoleWidth);
 
     char temp[100];
-    PrintText("[ 아이템 창 ]", 22, 9);
-    PrintText("[ 상  점 ]", 157, 9);
 
-    snprintf(temp, sizeof(temp), "강화비용: %d원", 300);
-    PrintTextLeft(temp, 2, 15);
-    snprintf(temp, sizeof(temp), "판매가격: %d원", 1000000000);
-    PrintTextLeft(temp, 2, 17);
-
-    snprintf(temp, sizeof(temp), "+%d %s", 0, "낡은 단검");
-    PrintCenter(temp, 40, consoleWidth);
-    snprintf(temp, sizeof(temp), "성공률 %d %%", 100);
-    PrintCenter(temp, 42, consoleWidth);
-
-    snprintf(temp, sizeof(temp), "방지권: %d", 0);
-    PrintTextLeft(temp, 2, 44);
-    snprintf(temp, sizeof(temp), "%d 원", 1000000);
-    PrintTextRight(temp, 175, 46);
+    int isUpdate = 1;
 
     while (1)
     {
+        if (isUpdate)
+        {
+            PrintText("[ 아이템 창 ]", 22, 9);
+            PrintText("[ 상  점 ]", 157, 9);
+
+            snprintf(temp, sizeof(temp), "강화비용: %d원", 300);
+            PrintTextLeft(temp, 2, 15);
+            snprintf(temp, sizeof(temp), "판매가격: %d원", 1000000000);
+            PrintTextLeft(temp, 2, 17);
+
+            snprintf(temp, sizeof(temp), "+%d %s", 0, "낡은 단검");
+            PrintCenter(temp, 40, consoleWidth);
+            snprintf(temp, sizeof(temp), "성공률 %d %%", 100);
+            PrintCenter(temp, 42, consoleWidth);
+
+            snprintf(temp, sizeof(temp), "방지권: %d", 0);
+            PrintTextLeft(temp, 2, 44);
+            snprintf(temp, sizeof(temp), "%d 원", 1000000);
+            PrintTextRight(temp, 175, 46);
+            isUpdate = 0;
+        }
 
         ScreenBarButton(1, 1);
         EnforceButton(1);
-        DrawImage("asset/sword_21.bmp", 90, 23, 600, 350);
+        DrawImage("asset/sword_0.bmp", 90, 23, 600, 350);
 
         Sleep(30);
     }
