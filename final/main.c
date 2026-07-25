@@ -16,6 +16,7 @@ void EnforceButton(int button1);
 
 void StartView();
 void MainView();
+void DestroyedView();
 void EquipmentView();
 void ShopView();
 void ForgeView();
@@ -36,7 +37,7 @@ int main(void)
     Clear();
 
     // StartView();
-    ShopView();
+    DestroyedView();
 }
 
 void ScreenBar()
@@ -125,6 +126,52 @@ void StartView()
             }
         }
         Sleep(20);
+    }
+}
+
+void DestroyedView()
+{
+    snprintf(view, sizeof(view), " ");
+    Clear();
+    ScreenBar();
+    PrintText("[ 살리기 ]", 157, 9);
+
+    char temp[50];
+    int isUpdate = 1, y = 30;
+
+    PrintTextLeft("방지권으로 살리기 버튼을 눌러 살릴 수 있습니다.", 10, 9);
+    snprintf(temp, sizeof(temp), "%s: 방지권 %d개 소모", "마력의 검", 1);
+    PrintTextLeft(temp, 10, 11);
+
+    PrintTextLeft(
+        " ████ █   █  ███  ████  ████     █   █  ███   ████    ████  █████  ████ █████ ████   ███  █   █ █████ ████  ",
+        10, y);
+    PrintTextLeft(
+        "█     █   █ █   █ █   █ █   █    █   █ █   █ █        █   █ █     █       █   █   █ █   █  █ █  █     █   █ ",
+        10, y + 1);
+    PrintTextLeft(
+        " ███  █ █ █ █   █ ████  █   █    █ █ █ █████  ███     █   █ ████   ███    █   ████  █   █   █   ████  █   █ ",
+        10, y + 2);
+    PrintTextLeft(
+        "    █ ██ ██ █   █ █  █  █   █    ██ ██ █   █     █    █   █ █         █   █   █  █  █   █   █   █     █   █ ",
+        10, y + 3);
+    PrintTextLeft(
+        "████  █   █  ███  █   █ ████     █   █ █   █ ████     ████  █████ ████    █   █   █  ███    █   █████ ████  ",
+        10, y + 4);
+
+    while (1)
+    {
+        if (isUpdate)
+        {
+            BottomBar(0, 0);
+            snprintf(temp, sizeof(temp), "%s %3d 개 줍기", "국적불분명 철조각", 1);
+            PrintTextLeft(temp, 10, 17);
+            isUpdate = 0;
+        }
+        ScreenBarButton(0, 1);
+        EnforceButton(1);
+
+        Sleep(30);
     }
 }
 
