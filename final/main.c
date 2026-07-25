@@ -16,6 +16,7 @@ void EnforceButton(int button1);
 
 void StartView();
 void MainView();
+void ForgeView();
 void EtcView();
 
 int level = 0;
@@ -32,6 +33,7 @@ int main(void)
     Clear();
 
     // StartView();
+    ForgeView();
 }
 
 void ScreenBar()
@@ -159,6 +161,40 @@ void MainView()
     }
 }
 
+void ForgeView()
+{
+    Clear();
+    int isUpdate = 1;
+    char temp[100];
+
+    ScreenBar();
+    PrintText("[ 잡템 창 ]", 22, 9);
+    PrintText("[ 나가기 ]", 157, 9);
+
+    int x = 10;
+    for (int i = 0; i < 9; i++)
+    {
+        snprintf(temp, sizeof(temp), "%s %d개 -> %s %d개", "국적불분명 철조각", 5, "깨짐 방지권", 1);
+        PrintTextLeft(temp, x, 15 + 3 * i);
+    }
+
+    while (1)
+    {
+        if (isUpdate)
+        {
+            BottomBar(0, 0);
+            isUpdate = 0;
+        }
+        ScreenBarButton(1, 1);
+        for (int i = 0; i < 9; i++)
+        {
+            DrawImage("asset/button.bmp", 157, 15 + 3 * i, 40, 40);
+        }
+
+        Sleep(30);
+    }
+}
+
 void EtcView()
 {
     Clear();
@@ -182,5 +218,6 @@ void EtcView()
             isUpdate = 0;
         }
         ScreenBarButton(0, 1);
+        Sleep(30);
     }
 }
