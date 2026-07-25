@@ -1,173 +1,91 @@
 /*
-gcc main.c -o app.exe -lgdi32 -luser32
-app.exe
+cd final
+gcc main.c -o main.exe
+start conhost main.exe
+
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <windows.h>
+#include "main.h"
 
-#define MAX_SWORDS 30
+void ScreenBar(int consoleWidth);
 
-// 1. 각 검의 이미지 정보를 담을 구조체 정의
-typedef struct
+void StartView(int consoleWidth);
+
+int main(void)
 {
-    BITMAPINFOHEADER bih;
-    unsigned char *pixelData;
-    int isLoaded;
-} BMPImage;
+    SetConsoleOutputCP(65001); // 인코딩 UTF-8 고정
 
-// 30개의 검 이미지를 저장할 배열
-BMPImage g_swords[MAX_SWORDS];
-int g_currentSwordIndex = 0; // 현재 화면에 띄울 검 번호 (0 ~ 29)
+    int consoleWidth = 180;
+    int consoleHeight = 50;
+    SetConsoleSize(consoleWidth, consoleHeight); // x, y
 
-// BMP 파일 로드 함수 (구조체로 저장하도록 변경)
-int load_bmp(const char *filename, BMPImage *outImg)
-{
-    FILE *fp = fopen(filename, "rb");
-    if (!fp)
-    {
-        printf("[오류] 파일 열기 실패: %s\n", filename);
-        outImg->isLoaded = 0;
-        return 0;
-    }
+    SetColor(15, 0);
+    Clear();
 
-    BITMAPFILEHEADER bfh;
-    fread(&bfh, sizeof(BITMAPFILEHEADER), 1, fp);
-    fread(&outImg->bih, sizeof(BITMAPINFOHEADER), 1, fp);
+    StartView(consoleWidth);
 
-    if (bfh.bfType != 0x4D42)
-    { // 'BM' 마크 확인
-        printf("[오류] 올바른 BMP 포맷이 아닙니다: %s\n", filename);
-        fclose(fp);
-        outImg->isLoaded = 0;
-        return 0;
-    }
-
-    int imgWidth = outImg->bih.biWidth;
-    int imgHeight = abs(outImg->bih.biHeight);
-    int bpp = outImg->bih.biBitCount;
-
-    int rowSize = ((imgWidth * bpp + 31) / 32) * 4;
-    int imageSize = rowSize * imgHeight;
-
-    outImg->pixelData = (unsigned char *)malloc(imageSize);
-    if (!outImg->pixelData)
-    {
-        fclose(fp);
-        outImg->isLoaded = 0;
-        return 0;
-    }
-
-    fseek(fp, bfh.bfOffBits, SEEK_SET);
-    fread(outImg->pixelData, 1, imageSize, fp);
-    fclose(fp);
-
-    // ★ [수정] 32bit BMP 투명 배경 보정
-    if (bpp == 32)
-    {
-        for (int i = 0; i < imageSize; i += 4)
-        {
-            unsigned char alpha = outImg->pixelData[i + 3];
-
-            // 알파(투명도)가 0인 투명 영역은 완전한 불투명 흰색(255)으로 변경
-            if (alpha == 0)
-            {
-                outImg->pixelData[i] = 255;     // Blue
-                outImg->pixelData[i + 1] = 255; // Green
-                outImg->pixelData[i + 2] = 255; // Red
-                outImg->pixelData[i + 3] = 255; // ★ Alpha도 255(불투명)로 설정해야 보임!
-            }
-        }
-    }
-
-    outImg->isLoaded = 1;
-    printf("[성공] 로드 완료: %s\n", filename);
-    return 1;
-}
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg)
-    {
-    case WM_PAINT: {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hwnd, &ps);
-
-        // 현재 선택된 검 이미지 가져오기
-        BMPImage *curImg = &g_swords[g_currentSwordIndex];
-
-        if (curImg->isLoaded && curImg->pixelData != NULL)
-        {
-            BITMAPINFO bmi;
-            ZeroMemory(&bmi, sizeof(BITMAPINFO));
-
-            bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-            bmi.bmiHeader.biWidth = curImg->bih.biWidth;
-            bmi.bmiHeader.biHeight = curImg->bih.biHeight;
-            bmi.bmiHeader.biPlanes = 1;
-            bmi.bmiHeader.biBitCount = curImg->bih.biBitCount;
-            bmi.bmiHeader.biCompression = BI_RGB;
-
-            SetDIBitsToDevice(hdc, 10, 10, curImg->bih.biWidth, abs(curImg->bih.biHeight), 0, 0, 0,
-                              abs(curImg->bih.biHeight), curImg->pixelData, &bmi, DIB_RGB_COLORS);
-        }
-
-        EndPaint(hwnd, &ps);
-        break;
-    }
-    case WM_DESTROY:
-        // 프로그램 종료 시 모든 메모리 해제
-        for (int i = 0; i < MAX_SWORDS; i++)
-        {
-            if (g_swords[i].pixelData)
-            {
-                free(g_swords[i].pixelData);
-            }
-        }
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
-    }
     return 0;
 }
 
-int main()
+void ScreenBar(int consoleWidth)
 {
-    // 30개 검 이미지 반복문으로 로드
-    char filePath[256];
-    for (int i = 0; i < MAX_SWORDS; i++)
+    PrintCenter("------------------------------------------------------------------------------------------------------"
+                "------------------------------------------------------------------------",
+                1, consoleWidth);
+    PrintCenter("-----------------", 5, consoleWidth);
+    PrintCenter("    검 강화하기    ", 6, consoleWidth);
+    PrintCenter("-----------------", 7, consoleWidth);
+    PrintCenter("------------------------------------------------------------------------------------------------------"
+                "------------------------------------------------------------------------",
+                48, consoleWidth);
+}
+
+void StartView(int consoleWidth)
+{
+    ScreenBar(consoleWidth);
+    PrintText("  easy  ", 60 - 1, 24);
+    PrintText("  hard  ", 120 - 1, 24);
+
+    PrintCenter("<- -> 방향키로 난이도 지정 후 엔터", 35, consoleWidth);
+    PrintCenter("난이도 지정 후 인게임에서 마우스로 조작", 37, consoleWidth);
+
+    int state = 0;
+
+    while (1)
     {
-        sprintf(filePath, "asset/sword_%d.bmp", i);
-        load_bmp(filePath, &g_swords[i]);
+
+        if (GetAsyncKeyState(VK_LEFT) & 0x8000) // 비트 연산
+        {
+            PrintText("[  easy  ]", 60 - 1, 24);
+            PrintText("   hard   ", 120 - 1, 24);
+            state = 1;
+        }
+
+        if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
+        {
+            PrintText("   easy   ", 60 - 1, 24);
+            PrintText("[  hard  ]", 120 - 1, 24);
+            state = 2;
+        }
+        if (GetAsyncKeyState(VK_RETURN) & 0x8000)
+        {
+            switch (state)
+            {
+            case 0:
+                break;
+
+            case 1:
+                PrintText("   easy 모드 입장  ", 60 - 1, 27);
+                break;
+
+            case 2:
+                PrintText("   hard 모드 입장   ", 120 - 1, 27);
+                break;
+
+            default:
+                break;
+            }
+        }
+        Sleep(20);
     }
-
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    const char g_szClassName[] = "MyBMPWindowClass";
-
-    WNDCLASSEX wc = {0};
-    wc.cbSize = sizeof(WNDCLASSEX);
-    wc.lpfnWndProc = WndProc;
-    wc.hInstance = hInstance;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpszClassName = g_szClassName;
-
-    RegisterClassEx(&wc);
-
-    HWND hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, g_szClassName, "검 강화하기 - 테스트", WS_OVERLAPPEDWINDOW,
-                                CW_USEDEFAULT, CW_USEDEFAULT, 900, 1000, NULL, NULL, hInstance, NULL);
-
-    ShowWindow(hwnd, SW_SHOW);
-    UpdateWindow(hwnd);
-
-    MSG Msg;
-    while (GetMessage(&Msg, NULL, 0, 0) > 0)
-    {
-        TranslateMessage(&Msg);
-        DispatchMessage(&Msg);
-    }
-
-    return Msg.wParam;
 }
