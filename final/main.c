@@ -16,12 +16,15 @@ void EnforceButton(int button1);
 
 void StartView();
 void MainView();
+void EquipmentView();
+void ShopView();
 void ForgeView();
 void EtcView();
 
 int level = 0;
 int consoleWidth = 180 + 1;
 int consoleHeight = 50 + 1;
+char view[30];
 
 int main(void)
 {
@@ -33,7 +36,7 @@ int main(void)
     Clear();
 
     // StartView();
-    ForgeView();
+    ShopView();
 }
 
 void ScreenBar()
@@ -44,6 +47,7 @@ void ScreenBar()
     PrintCenter("-----------------", 5, consoleWidth);
     PrintCenter("    검 강화하기    ", 6, consoleWidth);
     PrintCenter("-----------------", 7, consoleWidth);
+    PrintCenter(view, 9, consoleWidth);
     PrintCenter("------------------------------------------------------------------------------------------------------"
                 "------------------------------------------------------------------------",
                 48, consoleWidth);
@@ -80,6 +84,7 @@ void EnforceButton(int button)
 
 void StartView()
 {
+    snprintf(view, sizeof(view), " ");
     ScreenBar();
     PrintText("  easy  ", 60, 24);
     PrintText("  hard  ", 120, 24);
@@ -125,6 +130,7 @@ void StartView()
 
 void MainView()
 {
+    snprintf(view, sizeof(view), " ");
     Clear();
     ScreenBar();
     PrintText("[ 아이템 창 ]", 22, 9);
@@ -161,8 +167,77 @@ void MainView()
     }
 }
 
+void EquipmentView()
+{
+    snprintf(view, sizeof(view), "Equipment");
+    Clear();
+    PrintText("[ 나가기 ]", 157, 9);
+
+    int isUpdate = 1, x = 10;
+    char temp[30];
+
+    ScreenBar();
+
+    for (int i = 0; i < 11; i++)
+    {
+        snprintf(temp, sizeof(temp), "%s: %d", "국적불분명 철조각", 0);
+        PrintTextLeft(temp, x, 11 + 3 * i);
+    }
+
+    while (1)
+    {
+        if (isUpdate)
+        {
+            BottomBar(0, 0);
+            isUpdate = 0;
+        }
+        ScreenBarButton(0, 1);
+        Sleep(30);
+    }
+}
+
+void ShopView()
+{
+    snprintf(view, sizeof(view), "Welcome to shop");
+    Clear();
+    int isUpdate = 1;
+    char temp[100];
+
+    ScreenBar();
+    PrintTextLeft("Tip: 돈을 다 쓰시면 강화 비용을 지불할 수 없게 됩니다.", 7, 7);
+    PrintText("[ 나가기 ]", 157, 9);
+
+    int x = 15;
+    for (int i = 0; i < 6; i++)
+    {
+        snprintf(temp, sizeof(temp), "%s", "+9강 워프권");
+        PrintTextLeft(temp, x, 15 + 5 * i);
+        snprintf(temp, sizeof(temp), "%d원", 1000000);
+        PrintCenter(temp, 15 + 5 * i, consoleWidth);
+    }
+
+    while (1)
+    {
+        if (isUpdate)
+        {
+            BottomBar(0, 0);
+            isUpdate = 0;
+        }
+        ScreenBarButton(0, 1);
+
+        for (int i = 0; i < 6; i++)
+        {
+            DrawImage("asset/item.bmp", 10, 15 + 5 * i, 40, 40);
+            DrawImage("asset/button.bmp", 157, 15 + 5 * i, 40, 40);
+        }
+
+        Sleep(30);
+    }
+}
+
 void ForgeView()
 {
+    snprintf(view, sizeof(view), "Forge");
     Clear();
     int isUpdate = 1;
     char temp[100];
@@ -197,9 +272,11 @@ void ForgeView()
 
 void EtcView()
 {
+    snprintf(view, sizeof(view), "etc.");
     Clear();
+    PrintText("[ 나가기 ]", 157, 9);
 
-    int isUpdate = 1;
+    int isUpdate = 1, x = 10;
     char temp[30];
 
     ScreenBar();
@@ -207,7 +284,7 @@ void EtcView()
     for (int i = 0; i < 8; i++)
     {
         snprintf(temp, sizeof(temp), "%s: %d", "국적불분명 철조각", 0);
-        PrintCenter(temp, 15 + 3 * i, consoleWidth);
+        PrintTextLeft(temp, x, 15 + 3 * i);
     }
 
     while (1)
