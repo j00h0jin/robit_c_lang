@@ -89,7 +89,7 @@ int GetDisplayWidth(const char *str)
     return width;
 }
 
-// 출력
+// 출력(x좌표가 중앙)
 void PrintText(const char *text, int x, int y)
 {
     int textWidth = GetDisplayWidth(text);
@@ -99,6 +99,31 @@ void PrintText(const char *text, int x, int y)
         _x = 0; // 예외 처리
 
     GotoXY(_x, y);
+    printf("%s", text);
+}
+
+// 출력(x좌표부터)
+void PrintTextLeft(const char *text, int x, int y)
+{
+    int _x = x;
+
+    if (x < 0)
+        _x = 0; // 예외 처리
+
+    GotoXY(_x, y);
+    printf("%s", text);
+}
+
+// 출력(x좌표까지)
+void PrintTextRight(const char *text, int x, int y)
+{
+    int textWidth = GetDisplayWidth(text); // 한글/영문 실제 출력 너비 계산
+    int startX = x - textWidth;            // 끝점(anchorX)에서 너비만큼 왼쪽으로 시작점 이동
+
+    if (startX < 0)
+        startX = 0; // 예외 처리 (화면 좌측 이탈 방지)
+
+    GotoXY(startX, y);
     printf("%s", text);
 }
 
