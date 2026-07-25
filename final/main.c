@@ -9,28 +9,32 @@ start conhost main.exe
 
 #include "main.h"
 
-void ScreenBar(int consoleWidth);
+void ScreenBar();
+void BottomBar(int guardCard, int money);
 void ScreenBarButton(int button1, int button2);
 void EnforceButton(int button1);
 
-void StartView(int consoleWidth);
-void MainView(int consoleWidth);
+void StartView();
+void MainView();
+void EtcView();
+
+int level = 0;
+int consoleWidth = 180 + 1;
+int consoleHeight = 50 + 1;
 
 int main(void)
 {
     SetConsoleOutputCP(65001); // 인코딩 UTF-8 고정
 
-    int consoleWidth = 180 + 1;
-    int consoleHeight = 50 + 1;
     SetConsoleSize(consoleWidth, consoleHeight); // x, y
 
     SetColor(15, 0);
     Clear();
 
-    StartView(consoleWidth);
+    // StartView();
 }
 
-void ScreenBar(int consoleWidth)
+void ScreenBar()
 {
     PrintCenter("------------------------------------------------------------------------------------------------------"
                 "------------------------------------------------------------------------",
@@ -41,6 +45,20 @@ void ScreenBar(int consoleWidth)
     PrintCenter("------------------------------------------------------------------------------------------------------"
                 "------------------------------------------------------------------------",
                 48, consoleWidth);
+    if (level == 1)
+        PrintText("easy", 110, 6);
+    else if (level == 2)
+        PrintText("hard", 110, 6);
+}
+
+void BottomBar(int guardCard, int money)
+{
+    char temp[100];
+
+    snprintf(temp, sizeof(temp), "방지권: %d", 0);
+    PrintTextLeft(temp, 2, 44);
+    snprintf(temp, sizeof(temp), "%d 원", 1000000);
+    PrintTextRight(temp, 175, 46);
 }
 
 void ScreenBarButton(int button1, int button2)
@@ -56,19 +74,16 @@ void EnforceButton(int button)
 {
     if (button)
         DrawImage("asset/button.bmp", 152, 24, 150, 150);
-    // PrintText("[ BUTTON ]", 157, 24);
 }
 
-void StartView(int consoleWidth)
+void StartView()
 {
-    ScreenBar(consoleWidth);
+    ScreenBar();
     PrintText("  easy  ", 60, 24);
     PrintText("  hard  ", 120, 24);
 
     PrintCenter("<- -> 방향키로 난이도 지정 후 엔터", 35, consoleWidth);
     PrintCenter("난이도 지정 후 인게임에서 마우스로 조작", 38, consoleWidth);
-
-    int state = 0;
 
     while (1)
     {
@@ -77,28 +92,25 @@ void StartView(int consoleWidth)
         {
             PrintText("[  easy  ]", 60, 24);
             PrintText("   hard   ", 120, 24);
-            state = 1;
+            level = 1;
         }
 
         if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
         {
             PrintText("   easy   ", 60, 24);
             PrintText("[  hard  ]", 120, 24);
-            state = 2;
+            level = 2;
         }
         if (GetAsyncKeyState(VK_RETURN) & 0x8000)
         {
-            switch (state)
+            switch (level)
             {
-            case 0:
-                break;
-
             case 1:
-                MainView(consoleWidth);
+                MainView();
                 break;
 
             case 2:
-                MainView(consoleWidth);
+                MainView();
                 break;
 
             default:
@@ -109,10 +121,12 @@ void StartView(int consoleWidth)
     }
 }
 
-void MainView(int consoleWidth)
+void MainView()
 {
     Clear();
-    ScreenBar(consoleWidth);
+    ScreenBar();
+    PrintText("[ 아이템 창 ]", 22, 9);
+    PrintText("[ 상  점 ]", 157, 9);
 
     char temp[100];
 
@@ -122,9 +136,6 @@ void MainView(int consoleWidth)
     {
         if (isUpdate)
         {
-            PrintText("[ 아이템 창 ]", 22, 9);
-            PrintText("[ 상  점 ]", 157, 9);
-
             snprintf(temp, sizeof(temp), "강화비용: %d원", 300);
             PrintTextLeft(temp, 2, 15);
             snprintf(temp, sizeof(temp), "판매가격: %d원", 1000000000);
@@ -135,10 +146,8 @@ void MainView(int consoleWidth)
             snprintf(temp, sizeof(temp), "성공률 %d %%", 100);
             PrintCenter(temp, 42, consoleWidth);
 
-            snprintf(temp, sizeof(temp), "방지권: %d", 0);
-            PrintTextLeft(temp, 2, 44);
-            snprintf(temp, sizeof(temp), "%d 원", 1000000);
-            PrintTextRight(temp, 175, 46);
+            BottomBar(0, 0);
+
             isUpdate = 0;
         }
 
@@ -147,5 +156,31 @@ void MainView(int consoleWidth)
         DrawImage("asset/sword_0.bmp", 90, 23, 600, 350);
 
         Sleep(30);
+    }
+}
+
+void EtcView()
+{
+    Clear();
+
+    int isUpdate = 1;
+    char temp[30];
+
+    ScreenBar();
+
+    for (int i = 0; i < 8; i++)
+    {
+        snprintf(temp, sizeof(temp), "%s: %d", "국적불분명 철조각", 0);
+        PrintCenter(temp, 15 + 3 * i, consoleWidth);
+    }
+
+    while (1)
+    {
+        if (isUpdate)
+        {
+            BottomBar(0, 0);
+            isUpdate = 0;
+        }
+        ScreenBarButton(0, 1);
     }
 }
