@@ -139,3 +139,40 @@ void PrintCenter(const char *text, int y, int consoleWidth)
     GotoXY(x, y);
     printf("%s", text);
 }
+
+// 이미지 출력(좌표 중앙값)
+void DrawImage(const char *imagePath, int x, int y, int width, int height)
+{
+    HWND hwnd = GetConsoleWindow();
+    if (hwnd == NULL)
+        return;
+
+    HDC hdc = GetDC(hwnd);
+
+    HBITMAP hBitmap = (HBITMAP)LoadImageA(NULL, imagePath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+    if (hBitmap == NULL)
+    {
+        ReleaseDC(hwnd, hdc);
+        return;
+    }
+
+    HDC memDC = CreateCompatibleDC(hdc);
+    HBITMAP hOldBitmap = (HBITMAP)SelectObject(memDC, hBitmap);
+
+    BITMAP bm;
+    GetObject(hBitmap, sizeof(BITMAP), &bm);
+
+    int drawX = x * 8 - (width / 2);
+    int drawY = y * 16 - (height / 2);
+
+    TransparentBlt(hdc, drawX, drawY,                                       // 위치
+                   width, height,                                           // 크기
+                   memDC, 0, 0, bm.bmWidth, bm.bmHeight, RGB(255, 255, 255) // transparent color
+    );
+
+    SelectObject(memDC, hOldBitmap);
+    DeleteDC(memDC);
+    DeleteObject(hBitmap);
+    ReleaseDC(hwnd, hdc);
+}

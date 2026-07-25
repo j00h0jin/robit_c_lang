@@ -1,6 +1,6 @@
 /*
 cd final
-gcc main.c -o main.exe
+gcc main.c -o main.exe -lgdi32 -lmsimg32
 start conhost main.exe
 
 */
@@ -26,33 +26,6 @@ int main(void)
     Clear();
 
     StartView(consoleWidth);
-    // Clear();
-    // ScreenBar(consoleWidth, 1, 1);
-
-    // char temp[100];
-
-    // snprintf(temp, sizeof(temp), "강화비용: %d원", 300);
-    // PrintTextLeft(temp, 2, 15);
-    // snprintf(temp, sizeof(temp), "판매가격: %d원", 0);
-    // PrintTextLeft(temp, 2, 17);
-
-    // PrintText("[ BUTTON ]", 157, 23);
-
-    // PrintCenter("-----------------", 10, consoleWidth);
-    // PrintCenter("asset", 23, consoleWidth);
-    // PrintCenter("-----------------", 35, consoleWidth);
-
-    // snprintf(temp, sizeof(temp), "+%d %s", 0, "낡은 단검");
-    // PrintCenter(temp, 40, consoleWidth);
-    // snprintf(temp, sizeof(temp), "성공률 %d %%", 100);
-    // PrintCenter(temp, 42, consoleWidth);
-
-    // snprintf(temp, sizeof(temp), "방지권: %d", 0);
-    // PrintTextLeft(temp, 2, 44);
-    // snprintf(temp, sizeof(temp), "%d 원", 1000000);
-    // PrintTextRight(temp, 175, 46);
-
-    // getchar();
 }
 
 void ScreenBar(int consoleWidth, int button1, int button2)
@@ -132,13 +105,14 @@ void MainView(int consoleWidth)
 
     snprintf(temp, sizeof(temp), "강화비용: %d원", 300);
     PrintTextLeft(temp, 2, 15);
-    snprintf(temp, sizeof(temp), "판매가격: %d원", 0);
+    snprintf(temp, sizeof(temp), "판매가격: %d원", 1000000000);
     PrintTextLeft(temp, 2, 17);
 
     PrintText("[ BUTTON ]", 157, 23);
 
     PrintCenter("-----------------", 10, consoleWidth);
-    PrintCenter("asset", 23, consoleWidth);
+
+    // PrintCenter("asset", 23, consoleWidth);
     PrintCenter("-----------------", 35, consoleWidth);
 
     snprintf(temp, sizeof(temp), "+%d %s", 0, "낡은 단검");
@@ -151,5 +125,9 @@ void MainView(int consoleWidth)
     snprintf(temp, sizeof(temp), "%d 원", 1000000);
     PrintTextRight(temp, 175, 46);
 
-    getchar();
+    while (1)
+    {
+        DrawImage("asset/sword_0.bmp", 90, 22, 300, 300);
+        Sleep(50);
+    }
 }
