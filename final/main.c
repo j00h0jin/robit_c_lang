@@ -9,7 +9,9 @@ start conhost main.exe
 
 #include "main.h"
 
-void ScreenBar(int consoleWidth, int button1, int button2);
+void ScreenBar(int consoleWidth);
+void ScreenBarButton(int button1, int button2);
+void EnforceButton(int button1);
 
 void StartView(int consoleWidth);
 void MainView(int consoleWidth);
@@ -28,7 +30,7 @@ int main(void)
     StartView(consoleWidth);
 }
 
-void ScreenBar(int consoleWidth, int button1, int button2)
+void ScreenBar(int consoleWidth)
 {
     PrintCenter("------------------------------------------------------------------------------------------------------"
                 "------------------------------------------------------------------------",
@@ -39,21 +41,32 @@ void ScreenBar(int consoleWidth, int button1, int button2)
     PrintCenter("------------------------------------------------------------------------------------------------------"
                 "------------------------------------------------------------------------",
                 48, consoleWidth);
+}
 
+void ScreenBarButton(int button1, int button2)
+{
     if (button1)
-        PrintText("[ BUTTON 1 ]", 22, 6);
+        DrawImage("asset/button.bmp", 22, 6, 75, 75);
+
     if (button2)
-        PrintText("[ BUTTON 2 ]", 157, 6);
+        DrawImage("asset/button.bmp", 157, 6, 75, 75);
+}
+
+void EnforceButton(int button)
+{
+    if (button)
+        DrawImage("asset/button.bmp", 152, 24, 150, 150);
+    // PrintText("[ BUTTON ]", 157, 24);
 }
 
 void StartView(int consoleWidth)
 {
-    ScreenBar(consoleWidth, 0, 0);
+    ScreenBar(consoleWidth);
     PrintText("  easy  ", 60, 24);
     PrintText("  hard  ", 120, 24);
 
     PrintCenter("<- -> 방향키로 난이도 지정 후 엔터", 35, consoleWidth);
-    PrintCenter("난이도 지정 후 인게임에서 마우스로 조작", 37, consoleWidth);
+    PrintCenter("난이도 지정 후 인게임에서 마우스로 조작", 38, consoleWidth);
 
     int state = 0;
 
@@ -99,21 +112,16 @@ void StartView(int consoleWidth)
 void MainView(int consoleWidth)
 {
     Clear();
-    ScreenBar(consoleWidth, 1, 1);
+    ScreenBar(consoleWidth);
 
     char temp[100];
+    PrintText("[ 아이템 창 ]", 22, 9);
+    PrintText("[ 상  점 ]", 157, 9);
 
     snprintf(temp, sizeof(temp), "강화비용: %d원", 300);
     PrintTextLeft(temp, 2, 15);
     snprintf(temp, sizeof(temp), "판매가격: %d원", 1000000000);
     PrintTextLeft(temp, 2, 17);
-
-    PrintText("[ BUTTON ]", 157, 23);
-
-    PrintCenter("-----------------", 10, consoleWidth);
-
-    // PrintCenter("asset", 23, consoleWidth);
-    PrintCenter("-----------------", 35, consoleWidth);
 
     snprintf(temp, sizeof(temp), "+%d %s", 0, "낡은 단검");
     PrintCenter(temp, 40, consoleWidth);
@@ -127,7 +135,11 @@ void MainView(int consoleWidth)
 
     while (1)
     {
-        DrawImage("asset/sword_0.bmp", 90, 22, 300, 300);
-        Sleep(50);
+
+        ScreenBarButton(1, 1);
+        EnforceButton(1);
+        DrawImage("asset/sword_21.bmp", 90, 23, 600, 350);
+
+        Sleep(30);
     }
 }

@@ -117,11 +117,11 @@ void PrintTextLeft(const char *text, int x, int y)
 // 출력(x좌표까지)
 void PrintTextRight(const char *text, int x, int y)
 {
-    int textWidth = GetDisplayWidth(text); // 한글/영문 실제 출력 너비 계산
-    int startX = x - textWidth;            // 끝점(anchorX)에서 너비만큼 왼쪽으로 시작점 이동
+    int textWidth = GetDisplayWidth(text);
+    int startX = x - textWidth; // x좌표에서 텍스트 너비만큼 빼줌
 
     if (startX < 0)
-        startX = 0; // 예외 처리 (화면 좌측 이탈 방지)
+        startX = 0; // 예외 처리
 
     GotoXY(startX, y);
     printf("%s", text);
@@ -141,7 +141,7 @@ void PrintCenter(const char *text, int y, int consoleWidth)
 }
 
 // 이미지 출력(좌표 중앙값)
-void DrawImage(const char *imagePath, int x, int y, int width, int height)
+void DrawImage(const char *imagePath, int x, int y, int maxWidth, int maxHeight)
 {
     HWND hwnd = GetConsoleWindow();
     if (hwnd == NULL)
@@ -163,12 +163,31 @@ void DrawImage(const char *imagePath, int x, int y, int width, int height)
     BITMAP bm;
     GetObject(hBitmap, sizeof(BITMAP), &bm);
 
-    int drawX = x * 8 - (width / 2);
-    int drawY = y * 16 - (height / 2);
+    int targetWidth = maxWidth;
+    int targetHeight = maxHeight;
+
+    // 원본의 비율을 지키면서 박스 안에서 최대 크기로 설정함
+    if (bm.bmWidth * maxHeight > bm.bmHeight * maxWidth)
+    {
+        targetWidth = maxWidth;
+        targetHeight = (bm.bmHeight * maxWidth) / bm.bmWidth;
+    }
+    else
+    {
+        targetHeight = maxHeight;
+        targetWidth = (bm.bmWidth * maxHeight) / bm.bmHeight;
+    }
+
+    // 이미지 픽셀 -> 좌표화
+    int pixelX = x * 8;
+    int pixelY = y * 16;
+
+    int drawX = pixelX - (targetWidth / 2);
+    int drawY = pixelY - (targetHeight / 2);
 
     TransparentBlt(hdc, drawX, drawY,                                       // 위치
-                   width, height,                                           // 크기
-                   memDC, 0, 0, bm.bmWidth, bm.bmHeight, RGB(255, 255, 255) // transparent color
+                   targetWidth, targetHeight,                               // 비율 유지된 최종 크기
+                   memDC, 0, 0, bm.bmWidth, bm.bmHeight, RGB(255, 255, 255) // transparent color (흰색 지정)
     );
 
     SelectObject(memDC, hOldBitmap);
