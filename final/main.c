@@ -10,7 +10,7 @@ start conhost main.exe
 #include "main.h"
 
 void ScreenBar();
-void BottomBar(int guardCard, int money);
+void BottomBar();
 void ScreenBarButton(int button1, int button2);
 void EnforceButton(int button1);
 
@@ -21,6 +21,10 @@ void ShopView();
 void ForgeView();
 void EtcView();
 
+int LoadHardCsv(char *path);
+int LoadEasyPercent(char *path);
+void LoadEnhanceData(int mode);
+
 int level = 0;
 int consoleWidth = 180 + 1;
 int consoleHeight = 50 + 1;
@@ -28,121 +32,6 @@ char view[30];
 
 int enhanceItemCount = 0;
 int currentEnhanceIndex = 0;
-
-int LoadHardCsv(char *path)
-{
-    FILE *fp = fopen(path, "r");
-    if (!fp) // 예외(NULL)
-        return 0;
-
-    char line[200];
-    if (!fgets(line, sizeof(line), fp)) // 1줄 스킵, 스킵 후 비었을 경우 아래 조건문
-    {
-        fclose(fp);
-        return 0;
-    }
-
-    int count = 0;
-    // 파일 끝 or MAX_ENHANCE_ITEMS까지 while
-    while (fgets(line, sizeof(line), fp) && count < MAX_ENHANCE_ITEMS) // MAX_ENHANCE_ITEMS = 30
-    {
-        char *fields[7];
-        ParseCsvFields(line, fields, 7); // 7 fields로 쪼개기
-
-        if (fields[0] == NULL || fields[0][0] == '\0') // 빈 값이면 skip
-            continue;
-
-        EnhanceItem *item = &enhanceItems[count]; // 구조체 포인터 선언(여기다 저장)
-        item->step = ParseNumber(fields[0]);      // 단계 저장
-
-        if (fields[1]) // 이름 저장
-        {
-            TrimQuotes(fields[1]);
-            strncpy(item->name, fields[1], sizeof(item->name) - 1);
-            item->name[sizeof(item->name) - 1] = '\0'; // NULL 자리
-        }
-        else
-        {
-            item->name[0] = '\0'; // NULL 추가
-        }
-
-        item->cost = fields[2] ? ParseNumber(fields[2]) : 0;         // 강화 비용
-        item->successRate = fields[3] ? ParsePercent(fields[3]) : 0; // 강화 확률
-        item->price = fields[4] ? ParseNumber(fields[4]) : 0;        // 판매 가격
-        if (fields[5])
-        {
-            TrimQuotes(fields[5]);                       // 방지권 소모 개수
-            if (strstr(fields[5], "방지권불가") != NULL) // "방지권불가"인 경우 -1
-                item->guardCost = -1;
-            else
-                item->guardCost = ParseNumber(fields[5]);
-        }
-        else
-        {
-            item->guardCost = 0; // - 인 경우
-        }
-
-        if (fields[6]) // 드랍 아이템
-        {
-            TrimQuotes(fields[6]);
-            strncpy(item->dropItem, fields[6], sizeof(item->dropItem) - 1); // NULL 자리
-            item->dropItem[sizeof(item->dropItem) - 1] = '\0';
-            if (strcmp(item->dropItem, "-") == 0) // - 인 경우 \0
-                item->dropItem[0] = '\0';
-        }
-        else
-        {
-            item->dropItem[0] = '\0'; // 비었을 경우
-        }
-
-        count++;
-    }
-
-    fclose(fp); // 닫기
-    enhanceItemCount = count;
-    return 1;
-}
-
-int LoadEasyPercent(char *path)
-{
-    FILE *fp = fopen(path, "r");
-    if (!fp) // 예외(NULL)
-        return 0;
-
-    char line[200];
-    if (!fgets(line, sizeof(line), fp)) // 첫 줄 스킵, 스킵 후 파일 끝이라면 아래 조건문
-    {
-        fclose(fp);
-        return 0;
-    }
-
-    int idx = 0;
-    // 파일 끝까지 enhanceItemCount만큼 반복(둘 중 하나가 끝에 도달할 때까지)
-    while (fgets(line, sizeof(line), fp) && idx < enhanceItemCount)
-    {
-        char *fields[1];
-        ParseCsvFields(line, fields, 1);       // 데이터 내 따옴표나 콤마 등 제거하여 저장
-        if (fields[0] && fields[0][0] != '\0') // fields[0] 널이 아니면서 [0][0]이 빈 문자열이 아닐 때
-        {
-            int percent = ParsePercent(fields[0]);
-            if (percent > 0) // percent가 양수일 경우 successRate에 저장
-                enhanceItems[idx].successRate = percent;
-        }
-        idx++;
-    }
-
-    fclose(fp); // 닫기
-    return 1;
-}
-
-void LoadEnhanceData(int mode) // 1, 2
-{
-    if (!LoadHardCsv("csv/hard.csv")) // hard 모드 기본
-        return;
-
-    if (mode == 1) // easy인 경우 확률 덮어쓰기
-        LoadEasyPercent("csv/easy_percent.csv");
-}
 
 int main(void)
 {
@@ -209,13 +98,14 @@ void ScreenBar()
 }
 
 // 방지권 개수와 돈 출력
-void BottomBar(int guardCard, int money)
+void BottomBar()
 {
+    UserInfo *playerInfom = &playerInfo;
     char temp[100];
 
-    snprintf(temp, sizeof(temp), "방지권: %d", guardCard);
+    snprintf(temp, sizeof(temp), "방지권: %d", playerInfom->guard);
     PrintTextLeft(temp, 2, 44);
-    snprintf(temp, sizeof(temp), "%d 원", money);
+    snprintf(temp, sizeof(temp), "%d 원", playerInfom->money);
     PrintTextRight(temp, 175, 46);
 }
 
@@ -296,11 +186,14 @@ void MainView()
     // 페이지가 바뀌면 isUpdate는 항상 1 (모든 페이지)
     // 만약 정보 갱신이 생기는 이벤트가 있다면 isUpdate를 1로 지정하여 화면을 재출력하게 함
     int isUpdate = 1;
+    UserInfo *playerInfom = &playerInfo;
+    EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
 
     while (1)
     {
         if (isUpdate)
         {
+            EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
             // UI 부분
             Clear();
             ScreenBar();
@@ -316,8 +209,6 @@ void MainView()
 
                 PrintText("[ 판매 ]", 157, 9);
             }
-
-            EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
             snprintf(temp, sizeof(temp), "강화비용: %d원", item->cost);
             PrintTextLeft(temp, 2, 15);
             snprintf(temp, sizeof(temp), "판매가격: %d원", item->price);
@@ -328,7 +219,7 @@ void MainView()
             snprintf(temp, sizeof(temp), "성공률 %d %%", item->successRate);
             PrintCenter(temp, 42, consoleWidth);
 
-            BottomBar(playerInfo.guard, playerInfo.money);
+            BottomBar();
 
             isUpdate = 0;
         }
@@ -363,8 +254,8 @@ void MainView()
         if (clicked && IsMouseClickOnImage(157, 6, 75, 75) && currentEnhanceIndex > 0)
         {
             EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
-            playerInfo.money += item->price; // 판매금액만큼 추가
-            currentEnhanceIndex = 0;         // 팔았으므로 0단계로
+            playerInfom->money += item->price; // 판매금액만큼 추가
+            currentEnhanceIndex = 0;           // 팔았으므로 0단계로
             isUpdate = 1;
             continue;
         }
@@ -373,12 +264,12 @@ void MainView()
         if (clicked && IsMouseClickOnImage(152, 24, 150, 150))
         {
             EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
-            if (playerInfo.money < item->cost) // 소지 금액 < 강화 비용
+            if (playerInfom->money < item->cost) // 소지 금액 < 강화 비용
             {
                 continue;
             }
 
-            playerInfo.money -= item->cost;    // 강화 금액만큼 차감
+            playerInfom->money -= item->cost;  // 강화 금액만큼 차감
             int random = rand() % 100 + 1;     // 1 ~ 100
             if (random <= (item->successRate)) // random < 성공확률
             {
@@ -410,6 +301,8 @@ void DestroyedView()
     int dropCount = 0;
 
     EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
+    UserInfo *playerInfom = &playerInfo;
+
     if (item->dropItem[0] != '\0')
         dropCount = rand() % 10; // 0~9개 랜덤 드롭
 
@@ -420,7 +313,7 @@ void DestroyedView()
             Clear();
             ScreenBar();
             PrintText("[ 살리기 ]", 157, 9);
-            BottomBar(playerInfo.guard, playerInfo.money);
+            BottomBar();
 
             if (item->dropItem[0] != '\0') // 드랍 아이템이 있다면 출력
             {
@@ -469,9 +362,9 @@ void DestroyedView()
         if (clicked && IsMouseClickOnImage(157, 6, 75, 75))
         {
             // 방지권이 필요 방지권보다 같거나 크면서 해당 아이템이 방지권 사용 가능할 때
-            if (playerInfo.guard >= item->guardCost && item->guardCost > 0)
+            if (playerInfom->guard >= item->guardCost && item->guardCost > 0)
             {
-                playerInfo.guard -= item->guardCost;
+                playerInfom->guard -= item->guardCost;
                 PopView();
                 return;
             }
@@ -489,44 +382,93 @@ void DestroyedView()
     }
 }
 
+// TODO: shop, forge 추가
 void ShopView()
 {
     snprintf(view, sizeof(view), "Welcome to shop");
-    Clear();
+
     int isUpdate = 1;
     char temp[100];
 
-    ScreenBar();
-    PrintTextLeft("Tip: 돈을 다 쓰시면 강화 비용을 지불할 수 없게 됩니다.", 7, 7);
-    PrintText("[ 나가기 ]", 157, 9);
-
     int x = 15;
+
+    ShopProductInfo *shop = &shopProductInfo[0];
+    UserInfo *playerInfom = &playerInfo;
 
     while (1)
     {
         if (isUpdate)
         {
-            for (int i = 0; i < 6; i++)
+            Clear();
+            ScreenBar();
+            PrintTextLeft("Tip: 돈을 다 쓰시면 강화 비용을 지불할 수 없게 됩니다.", 7, 7);
+            PrintText("[ 나가기 ]", 157, 9);
+
+            for (int i = 0; i < SHOP_ITEM_TYPES; i++)
             {
-                snprintf(temp, sizeof(temp), "%s", "+9강 워프권");
+                snprintf(temp, sizeof(temp), "%s", shop[i].ItemNames);
                 PrintTextLeft(temp, x, 15 + 5 * i);
-                snprintf(temp, sizeof(temp), "%d원", 1000000);
+                snprintf(temp, sizeof(temp), "%d원", shop[i].price);
                 PrintCenter(temp, 15 + 5 * i, consoleWidth);
             }
 
-            BottomBar(playerInfo.guard, playerInfo.money);
+            BottomBar();
             isUpdate = 0;
         }
         ScreenBarButton(0, 1);
 
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < SHOP_ITEM_TYPES; i++)
         {
             DrawImage("asset/item.bmp", 10, 15 + 5 * i, 40, 40);
             DrawImage("asset/button.bmp", 157, 15 + 5 * i, 40, 40);
         }
+        BOOL clicked = MouseLeftButtonClicked();
+
+        for (int i = 0; i < SHOP_ITEM_TYPES; i++)
+        {
+            if (clicked && IsMouseClickOnImage(157, 15 + 5 * i, 40, 40) && playerInfom->money >= shop[i].price)
+            {
+                playerInfom->money -= shop[i].price;
+                if (i < 4)
+                {
+                    switch (i)
+                    {
+                    case 0:
+                        currentEnhanceIndex = 9;
+                        break;
+                    case 1:
+                        currentEnhanceIndex = 13;
+                        break;
+                    case 2:
+                        currentEnhanceIndex = 14;
+                        break;
+                    case 3:
+                        currentEnhanceIndex = 15;
+                        break;
+
+                    default:
+                        break;
+                    }
+                    PopView();
+                    return;
+                }
+                switch (i)
+                {
+                case 4:
+                    playerInfom->guard += 1;
+                    break;
+                case 5:
+                    playerInfom->guard += 3;
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        }
 
         // 우측 상단(나가기) 버튼 클릭 시 현재 뷰 팝
-        BOOL clicked = MouseLeftButtonClicked();
+
         if (clicked && IsMouseClickOnImage(157, 6, 75, 75))
         {
             PopView();
@@ -549,7 +491,7 @@ void ForgeView()
     PrintText("[ 나가기 ]", 157, 9);
 
     int x = 10;
-    for (int i = 0; i < 9; i++)
+    for (int i = 0; i < 8; i++)
     {
         snprintf(temp, sizeof(temp), "%s %d개 -> %s %d개", "국적불분명 철조각", 5, "깨짐 방지권", 1);
         PrintTextLeft(temp, x, 15 + 3 * i);
@@ -559,7 +501,7 @@ void ForgeView()
     {
         if (isUpdate)
         {
-            BottomBar(playerInfo.guard, playerInfo.money);
+            BottomBar();
             isUpdate = 0;
         }
         ScreenBarButton(1, 1);
@@ -599,6 +541,8 @@ void EtcView()
     char dropNames[MAX_DROP_ITEM_TYPES][50] = {{0}};
     int dropCount = 0;
 
+    UserInfo *playerInfom = &playerInfo;
+
     ScreenBar();
 
     // hard.csv의 모든 드랍 아이템 이름을 고유하게 수집
@@ -629,7 +573,7 @@ void EtcView()
     for (int i = 0; i < dropCount; i++)
     {
         int idx = GetDropItemIndex(dropNames[i]);
-        int count = idx >= 0 ? playerInfo.dropItemCounts[idx] : 0;
+        int count = idx >= 0 ? playerInfom->dropItemCounts[idx] : 0;
         snprintf(temp, sizeof(temp), "%s: %d개", dropNames[i], count);
         PrintTextLeft(temp, 10, 15 + 3 * i);
     }
@@ -638,7 +582,7 @@ void EtcView()
     {
         if (isUpdate)
         {
-            BottomBar(playerInfo.guard, playerInfo.money);
+            BottomBar();
             isUpdate = 0;
         }
         ScreenBarButton(0, 1); // 우측 상탄 버튼 이미지 표시
@@ -652,4 +596,119 @@ void EtcView()
         }
         Sleep(30);
     }
+}
+
+int LoadHardCsv(char *path)
+{
+    FILE *fp = fopen(path, "r");
+    if (!fp) // 예외(NULL)
+        return 0;
+
+    char line[200];
+    if (!fgets(line, sizeof(line), fp)) // 1줄 스킵, 스킵 후 비었을 경우 아래 조건문
+    {
+        fclose(fp);
+        return 0;
+    }
+
+    int count = 0;
+    // 파일 끝 or MAX_ENHANCE_ITEMS까지 while
+    while (fgets(line, sizeof(line), fp) && count < MAX_ENHANCE_ITEMS) // MAX_ENHANCE_ITEMS = 30
+    {
+        char *fields[7];
+        ParseCsvFields(line, fields, 7); // 7 fields로 쪼개기
+
+        if (fields[0] == NULL || fields[0][0] == '\0') // 빈 값이면 skip
+            continue;
+
+        EnhanceItem *item = &enhanceItems[count]; // 구조체 포인터 선언(여기다 저장)
+        item->step = ParseNumber(fields[0]);      // 단계 저장
+
+        if (fields[1]) // 이름 저장
+        {
+            TrimQuotes(fields[1]);
+            strncpy(item->name, fields[1], sizeof(item->name) - 1);
+            item->name[sizeof(item->name) - 1] = '\0'; // NULL 자리
+        }
+        else
+        {
+            item->name[0] = '\0'; // NULL 추가
+        }
+
+        item->cost = fields[2] ? ParseNumber(fields[2]) : 0;        // 강화 비용
+        item->successRate = fields[3] ? ParseNumber(fields[3]) : 0; // 강화 확률
+        item->price = fields[4] ? ParseNumber(fields[4]) : 0;       // 판매 가격
+        if (fields[5])
+        {
+            TrimQuotes(fields[5]);                       // 방지권 소모 개수
+            if (strstr(fields[5], "방지권불가") != NULL) // "방지권불가"인 경우 -1
+                item->guardCost = -1;
+            else
+                item->guardCost = ParseNumber(fields[5]);
+        }
+        else
+        {
+            item->guardCost = 0; // - 인 경우
+        }
+
+        if (fields[6]) // 드랍 아이템
+        {
+            TrimQuotes(fields[6]);
+            strncpy(item->dropItem, fields[6], sizeof(item->dropItem) - 1); // NULL 자리
+            item->dropItem[sizeof(item->dropItem) - 1] = '\0';
+            if (strcmp(item->dropItem, "-") == 0) // - 인 경우 \0
+                item->dropItem[0] = '\0';
+        }
+        else
+        {
+            item->dropItem[0] = '\0'; // 비었을 경우
+        }
+
+        count++;
+    }
+
+    fclose(fp); // 닫기
+    enhanceItemCount = count;
+    return 1;
+}
+
+int LoadEasyPercent(char *path)
+{
+    FILE *fp = fopen(path, "r");
+    if (!fp) // 예외(NULL)
+        return 0;
+
+    char line[200];
+    if (!fgets(line, sizeof(line), fp)) // 첫 줄 스킵, 스킵 후 파일 끝이라면 아래 조건문
+    {
+        fclose(fp);
+        return 0;
+    }
+
+    int idx = 0;
+    // 파일 끝까지 enhanceItemCount만큼 반복(둘 중 하나가 끝에 도달할 때까지)
+    while (fgets(line, sizeof(line), fp) && idx < enhanceItemCount)
+    {
+        char *fields[1];
+        ParseCsvFields(line, fields, 1);       // 데이터 내 따옴표나 콤마 등 제거하여 저장
+        if (fields[0] && fields[0][0] != '\0') // fields[0] 널이 아니면서 [0][0]이 빈 문자열이 아닐 때
+        {
+            int percent = ParseNumber(fields[0]);
+            if (percent > 0) // percent가 양수일 경우 successRate에 저장
+                enhanceItems[idx].successRate = percent;
+        }
+        idx++;
+    }
+
+    fclose(fp); // 닫기
+    return 1;
+}
+
+void LoadEnhanceData(int mode) // 1, 2
+{
+    if (!LoadHardCsv("csv/hard.csv")) // hard 모드 기본
+        return;
+
+    if (mode == 1) // easy인 경우 확률 덮어쓰기
+        LoadEasyPercent("csv/easy_percent.csv");
 }

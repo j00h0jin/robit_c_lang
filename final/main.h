@@ -7,6 +7,7 @@
 // 강화 아이템 구조체(csv 파일 받는)
 #define MAX_ENHANCE_ITEMS 30
 #define MAX_DROP_ITEM_TYPES 8
+#define SHOP_ITEM_TYPES 6
 
 typedef struct
 {
@@ -28,8 +29,16 @@ typedef struct
     char dropItemNames[MAX_DROP_ITEM_TYPES][100];
     int dropItemCounts[MAX_DROP_ITEM_TYPES];
 } UserInfo;
-
 UserInfo playerInfo = {1000000, 0, {{0}}, {0}}; // init
+
+typedef struct
+{
+    char ItemNames[100];
+    int price;
+} ShopProductInfo;
+ShopProductInfo shopProductInfo[SHOP_ITEM_TYPES] = {{"+9강 워프권", 800000},      {"+13강 워프권", 5000000},
+                                                    {"+14강 워프권", 7500000},    {"+15강 워프권", 10000000},
+                                                    {"깨짐 방지권 x 1", 2100000}, {"깨짐 방지권 x 3", 6000000}};
 
 // 해당 좌표로 이동
 void GotoXY(int _x, int _y)
@@ -365,23 +374,6 @@ int ParseNumber(const char *text)
         text++;
     }
     return found ? value : 0; // 숫자가 없었다면 0, 있었다면 value
-}
-
-// 숫자 추출
-int ParsePercent(const char *text)
-{
-    int value = 0;
-    int found = 0;
-    while (*text)
-    {
-        if (*text >= '0' && *text <= '9')
-        {
-            found = 1;
-            value = value * 10 + (*text - '0');
-        }
-        text++;
-    }
-    return found ? value : 0;
 }
 
 void ParseCsvFields(char *line, char *fields[], int maxFields)
