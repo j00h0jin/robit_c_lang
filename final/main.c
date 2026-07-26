@@ -29,6 +29,9 @@ char view[30];
 
 int main(void)
 {
+    // 콘솔 제목 설정
+    SetTitle();
+
     SetConsoleOutputCP(65001); // 인코딩 UTF-8 고정
 
     // QuickEdit 모드 비활성화
@@ -47,11 +50,19 @@ int main(void)
 
     SetConsoleSize(consoleWidth, consoleHeight); // x, y
 
-    SetColor(15, 0);
-    Clear();
+    SetColor(15, 0); // 배경 흰색, 글자 검정색
+    Clear();         // 배경과 글자를 지정한 뒤 Clear 해줘야 함
 
+    // StartView는 한 번만 표시하므로 스택에 넣지 않음
     StartView();
-    // DestroyedView();
+
+    // 나머지 뷰는 스택으로 관리
+    while (IsViewStackEmpty() != 1) // 스택이 비어있지 않으면
+    {
+        void (*cur)(void) = TopView(); // 스택의 top view를 cur에 저장
+
+        cur(); // cur 보여줌
+    }
 }
 
 void ScreenBar()
@@ -128,12 +139,11 @@ void StartView()
             switch (level)
             {
             case 1:
-                MainView();
-                break;
-
+                PushView(MainView);
+                return;
             case 2:
-                MainView();
-                break;
+                PushView(MainView);
+                return;
 
             default:
                 break;
@@ -148,7 +158,7 @@ void MainView()
     snprintf(view, sizeof(view), " ");
     Clear();
     ScreenBar();
-    PrintText("[ 아이템 창 ]", 22, 9);
+    PrintText("[ 조합소 ]", 22, 9);
     PrintText("[ 상  점 ]", 157, 9);
 
     char temp[100];
@@ -180,9 +190,15 @@ void MainView()
         EnforceButton(1);
         DrawImage("asset/sword_0.bmp", 90, 23, 600, 350);
 
-        if (MouseLeftButtonClicked() && IsMouseClickOnImage(22, 6, 75, 75))
+        BOOL clicked = MouseLeftButtonClicked();
+        if (clicked && IsMouseClickOnImage(157, 6, 75, 75))
         {
-            ForgeView();
+            PushView(ShopView);
+            return;
+        }
+        if (clicked && IsMouseClickOnImage(22, 6, 75, 75))
+        {
+            PushView(ForgeView);
             return;
         }
 
@@ -236,35 +252,6 @@ void DestroyedView()
     }
 }
 
-void EquipmentView()
-{
-    snprintf(view, sizeof(view), "Equipment");
-    Clear();
-    PrintText("[ 나가기 ]", 157, 9);
-
-    int isUpdate = 1, x = 10;
-    char temp[30];
-
-    ScreenBar();
-
-    for (int i = 0; i < 11; i++)
-    {
-        snprintf(temp, sizeof(temp), "%s: %d", "국적불분명 철조각", 0);
-        PrintTextLeft(temp, x, 11 + 3 * i);
-    }
-
-    while (1)
-    {
-        if (isUpdate)
-        {
-            BottomBar(0, 0);
-            isUpdate = 0;
-        }
-        ScreenBarButton(0, 1);
-        Sleep(30);
-    }
-}
-
 void ShopView()
 {
     snprintf(view, sizeof(view), "Welcome to shop");
@@ -298,6 +285,14 @@ void ShopView()
         {
             DrawImage("asset/item.bmp", 10, 15 + 5 * i, 40, 40);
             DrawImage("asset/button.bmp", 157, 15 + 5 * i, 40, 40);
+        }
+
+        // 우측 상단(나가기) 버튼 클릭 시 현재 뷰 팝
+        BOOL clicked = MouseLeftButtonClicked();
+        if (clicked && IsMouseClickOnImage(157, 6, 75, 75))
+        {
+            PopView();
+            return;
         }
 
         Sleep(30);
@@ -335,6 +330,22 @@ void ForgeView()
             DrawImage("asset/button.bmp", 157, 15 + 3 * i, 40, 40);
         }
 
+        BOOL clicked = MouseLeftButtonClicked();
+
+        // 좌측 상단 버튼 클릭 시 EtcView로 이동
+        if (clicked && IsMouseClickOnImage(22, 6, 75, 75))
+        {
+            PushView(EtcView);
+            return;
+        }
+
+        // 우측 상단(나가기) 버튼 클릭 시 현재 뷰 팝
+        if (clicked && IsMouseClickOnImage(157, 6, 75, 75))
+        {
+            PopView();
+            return;
+        }
+
         Sleep(30);
     }
 }
@@ -364,6 +375,14 @@ void EtcView()
             isUpdate = 0;
         }
         ScreenBarButton(0, 1);
+
+        // 우측 상단(나가기) 버튼 클릭 시 현재 뷰 팝
+        BOOL clicked = MouseLeftButtonClicked();
+        if (clicked && IsMouseClickOnImage(157, 6, 75, 75))
+        {
+            PopView();
+            return;
+        }
         Sleep(30);
     }
 }

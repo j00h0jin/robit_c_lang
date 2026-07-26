@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <windows.h>
 
+// 해당 좌표로 이동
 void GotoXY(int _x, int _y)
 {
 
@@ -21,16 +23,19 @@ COORD GetXY(void)
     return pos;
 }
 
+// 화면 비우기
 void Clear(void)
 {
     system("cls");
 }
 
-void SetTitle(char *_szConsoleName)
+void SetTitle(void)
 {
-    SetConsoleTitle(_szConsoleName);
+    // UTF-16 지정 (제목만)
+    SetConsoleTitleW(L"검 강화하기");
 }
 
+// 배경, 글자색 지정
 void SetColor(unsigned char _BgColor, unsigned char _TextColor)
 {
     if (_BgColor > 15 || _TextColor > 15)
@@ -50,6 +55,7 @@ void MySetCursor(BOOL _bShow)
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &curInfor);
 }
 
+// 콘솔 사이즈 지정
 void SetConsoleSize(int _col, int _lines)
 {
     char setText[100];
@@ -227,3 +233,43 @@ BOOL IsMouseClickOnImage(int imageX, int imageY, int imageWidth, int imageHeight
 
     return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom;
 }
+
+// view stack
+typedef struct ViewNode
+{
+    void (*view)(void); // 함수 포인터
+    struct ViewNode *next;
+} ViewNode;
+static ViewNode *viewStackTop = NULL; // init
+
+void PushView(void (*view)(void))
+{
+    ViewNode *node = (ViewNode *)malloc(sizeof(ViewNode)); // 새 view node
+    if (node == NULL)                                      // 메모리 할당 실패 시 예외
+        return;
+    node->view = view;         // node의 view에 받아온 view 저장
+    node->next = viewStackTop; // node의 text를 top에 연결(처음인 경우 NULL)
+    viewStackTop = node;       // top을 현재 노드로
+}
+
+void PopView(void)
+{
+    if (viewStackTop == NULL) // 스택이 비어있으면 return
+        return;
+    ViewNode *top = viewStackTop;
+    viewStackTop = top->next; // 다음 노드를 top으로 지정
+    free(top);                // 메모리 해제
+}
+
+void (*TopView(void))(void)
+{
+    if (viewStackTop == NULL) // 스택이 비어있으면 NULL
+        return NULL;
+    return viewStackTop->view; // Top의 view 반환
+}
+
+int IsViewStackEmpty(void)
+{
+    return viewStackTop == NULL; // 스택이 비어있으면 1, 아니면 0
+}
+// view stack
