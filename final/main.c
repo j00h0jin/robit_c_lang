@@ -382,7 +382,6 @@ void DestroyedView()
     }
 }
 
-// TODO: shop, forge 추가
 void ShopView()
 {
     snprintf(view, sizeof(view), "Welcome to shop");
@@ -392,13 +391,14 @@ void ShopView()
 
     int x = 15;
 
-    ShopProductInfo *shop = &shopProductInfo[0];
+    ShopProductInfo *shop = shopProductInfo;
     UserInfo *playerInfom = &playerInfo;
 
     while (1)
     {
         if (isUpdate)
         {
+            // UI
             Clear();
             ScreenBar();
             PrintTextLeft("Tip: 돈을 다 쓰시면 강화 비용을 지불할 수 없게 됩니다.", 7, 7);
@@ -433,16 +433,16 @@ void ShopView()
                 {
                     switch (i)
                     {
-                    case 0:
+                    case 0: // 9 워프
                         currentEnhanceIndex = 9;
                         break;
-                    case 1:
+                    case 1: // 13 워프
                         currentEnhanceIndex = 13;
                         break;
-                    case 2:
+                    case 2: // 14 워프
                         currentEnhanceIndex = 14;
                         break;
-                    case 3:
+                    case 3: // 15 워프
                         currentEnhanceIndex = 15;
                         break;
 
@@ -452,12 +452,14 @@ void ShopView()
                     PopView();
                     return;
                 }
+                isUpdate = 1; // 화면 다시 그려주기
                 switch (i)
                 {
-                case 4:
+                case 4: // 방지권 1개
                     playerInfom->guard += 1;
+
                     break;
-                case 5:
+                case 5: // 방지권 3개
                     playerInfom->guard += 3;
                     break;
 
@@ -482,35 +484,89 @@ void ShopView()
 void ForgeView()
 {
     snprintf(view, sizeof(view), "Forge");
-    Clear();
+
     int isUpdate = 1;
     char temp[100];
 
-    ScreenBar();
-    PrintText("[ 잡템 창 ]", 22, 9);
-    PrintText("[ 나가기 ]", 157, 9);
-
     int x = 10;
-    for (int i = 0; i < 8; i++)
-    {
-        snprintf(temp, sizeof(temp), "%s %d개 -> %s %d개", "국적불분명 철조각", 5, "깨짐 방지권", 1);
-        PrintTextLeft(temp, x, 15 + 3 * i);
-    }
+    ForgeInfo *fgInfo = forgeInfo;
 
     while (1)
     {
         if (isUpdate)
         {
+            // UI
+            Clear();
             BottomBar();
+            ScreenBar();
+            PrintText("[ 잡템 창 ]", 22, 9);
+            PrintText("[ 나가기 ]", 157, 9);
+            for (int i = 0; i < MAX_DROP_ITEM_TYPES; i++)
+            {
+                snprintf(temp, sizeof(temp), "%s %d개 -> 깨짐 방지권 %d개", fgInfo[i].DropItemNames,
+                         fgInfo[i].DropItemCounts, fgInfo[i].GuardCounts);
+                PrintTextLeft(temp, x, 15 + 3 * i);
+            }
+
             isUpdate = 0;
         }
         ScreenBarButton(1, 1);
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < MAX_DROP_ITEM_TYPES; i++)
         {
             DrawImage("asset/button.bmp", 157, 15 + 3 * i, 40, 40);
         }
 
+        UserInfo *playerInfom = &playerInfo;
+        ForgeInfo *fgInfo = forgeInfo;
         BOOL clicked = MouseLeftButtonClicked();
+
+        for (int i = 0; i < SHOP_ITEM_TYPES; i++)
+        {
+
+            if (clicked && IsMouseClickOnImage(157, 15 + 5 * i, 40, 40) &&
+                playerInfom->dropItemCounts[i] >= fgInfo[i].DropItemCounts)
+            {
+                isUpdate = 1;
+                switch (i)
+                {
+                case 0:
+                    playerInfom->dropItemCounts[i] -= fgInfo[i].DropItemCounts;
+                    playerInfom->guard += fgInfo[i].GuardCounts;
+                    break;
+                case 1:
+                    playerInfom->dropItemCounts[i] -= fgInfo[i].DropItemCounts;
+                    playerInfom->guard += fgInfo[i].GuardCounts;
+                    break;
+                case 2:
+                    playerInfom->dropItemCounts[i] -= fgInfo[i].DropItemCounts;
+                    playerInfom->guard += fgInfo[i].GuardCounts;
+                    break;
+                case 3:
+                    playerInfom->dropItemCounts[i] -= fgInfo[i].DropItemCounts;
+                    playerInfom->guard += fgInfo[i].GuardCounts;
+                    break;
+                case 4:
+                    playerInfom->dropItemCounts[i] -= fgInfo[i].DropItemCounts;
+                    playerInfom->guard += fgInfo[i].GuardCounts;
+                    break;
+                case 5:
+                    playerInfom->dropItemCounts[i] -= fgInfo[i].DropItemCounts;
+                    playerInfom->guard += fgInfo[i].GuardCounts;
+                    break;
+                case 6:
+                    playerInfom->dropItemCounts[i] -= fgInfo[i].DropItemCounts;
+                    playerInfom->guard += fgInfo[i].GuardCounts;
+                    break;
+                case 7:
+                    playerInfom->dropItemCounts[i] -= fgInfo[i].DropItemCounts;
+                    playerInfom->guard += fgInfo[i].GuardCounts;
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        }
 
         // 좌측 상단 버튼 클릭 시 EtcView로 이동
         if (clicked && IsMouseClickOnImage(22, 6, 75, 75))
@@ -533,57 +589,56 @@ void ForgeView()
 void EtcView()
 {
     snprintf(view, sizeof(view), "etc.");
-    Clear();
-    PrintText("[ 나가기 ]", 157, 9);
 
     int isUpdate = 1;
     char temp[100];
     char dropNames[MAX_DROP_ITEM_TYPES][50] = {{0}};
     int dropCount = 0;
 
-    UserInfo *playerInfom = &playerInfo;
-
-    ScreenBar();
-
-    // hard.csv의 모든 드랍 아이템 이름을 고유하게 수집
-    for (int i = 0; i < enhanceItemCount && dropCount < MAX_DROP_ITEM_TYPES; i++)
-    {
-        const char *name = enhanceItems[i].dropItem; // 드랍 아이템이 비어있는 경우 skip
-        if (name == NULL || name[0] == '\0')
-            continue;
-
-        int found = 0;
-        for (int j = 0; j < dropCount; j++) // drop names에 추가된 적 있는지 확인
-        {
-            if (strcmp(dropNames[j], name) == 0) // 있다면 break
-            {
-                found = 1;
-                break;
-            }
-        }
-        if (found == 0) // 추가된 적 없으면 추가
-        {
-            strncpy(dropNames[dropCount], name, sizeof(dropNames[dropCount]) - 1); // NULL 자리
-            dropNames[dropCount][sizeof(dropNames[dropCount]) - 1] = '\0';         // 마지막 NULL 추가
-            dropCount++;                                                           // 추가되었으므로 drop count +1
-        }
-    }
-
-    // 보유 수량 출력
-    for (int i = 0; i < dropCount; i++)
-    {
-        int idx = GetDropItemIndex(dropNames[i]);
-        int count = idx >= 0 ? playerInfom->dropItemCounts[idx] : 0;
-        snprintf(temp, sizeof(temp), "%s: %d개", dropNames[i], count);
-        PrintTextLeft(temp, 10, 15 + 3 * i);
-    }
-
     while (1)
     {
         if (isUpdate)
         {
+            Clear();
+            PrintText("[ 나가기 ]", 157, 9);
             BottomBar();
             isUpdate = 0;
+            UserInfo *playerInfom = &playerInfo;
+
+            ScreenBar();
+
+            // hard.csv의 모든 드랍 아이템 이름을 고유하게 수집
+            for (int i = 0; i < enhanceItemCount && dropCount < MAX_DROP_ITEM_TYPES; i++)
+            {
+                const char *name = enhanceItems[i].dropItem; // 드랍 아이템이 비어있는 경우 skip
+                if (name == NULL || name[0] == '\0')
+                    continue;
+
+                int found = 0;
+                for (int j = 0; j < dropCount; j++) // drop names에 추가된 적 있는지 확인
+                {
+                    if (strcmp(dropNames[j], name) == 0) // 있다면 break
+                    {
+                        found = 1;
+                        break;
+                    }
+                }
+                if (found == 0) // 추가된 적 없으면 추가
+                {
+                    strncpy(dropNames[dropCount], name, sizeof(dropNames[dropCount]) - 1); // NULL 자리
+                    dropNames[dropCount][sizeof(dropNames[dropCount]) - 1] = '\0';         // 마지막 NULL 추가
+                    dropCount++; // 추가되었으므로 drop count +1
+                }
+            }
+
+            // 보유 수량 출력
+            for (int i = 0; i < dropCount; i++)
+            {
+                int idx = GetDropItemIndex(dropNames[i]);
+                int count = idx >= 0 ? playerInfom->dropItemCounts[idx] : 0;
+                snprintf(temp, sizeof(temp), "%s: %d개", dropNames[i], count);
+                PrintTextLeft(temp, 10, 15 + 3 * i);
+            }
         }
         ScreenBarButton(0, 1); // 우측 상탄 버튼 이미지 표시
 

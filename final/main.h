@@ -4,11 +4,11 @@
 #include <time.h>
 #include <windows.h>
 
-// 강화 아이템 구조체(csv 파일 받는)
 #define MAX_ENHANCE_ITEMS 30
 #define MAX_DROP_ITEM_TYPES 8
 #define SHOP_ITEM_TYPES 6
 
+// 강화 아이템 구조체(csv 파일 받는)
 typedef struct
 {
     int step;
@@ -31,14 +31,28 @@ typedef struct
 } UserInfo;
 UserInfo playerInfo = {1000000, 0, {{0}}, {0}}; // init
 
+// ShopItem 정보
 typedef struct
 {
     char ItemNames[100];
     int price;
 } ShopProductInfo;
-ShopProductInfo shopProductInfo[SHOP_ITEM_TYPES] = {{"+9강 워프권", 800000},      {"+13강 워프권", 5000000},
-                                                    {"+14강 워프권", 7500000},    {"+15강 워프권", 10000000},
-                                                    {"깨짐 방지권 x 1", 2100000}, {"깨짐 방지권 x 3", 6000000}};
+ShopProductInfo shopProductInfo[SHOP_ITEM_TYPES] = {
+    {"+9강 워프권", 800000},    {"+13강 워프권", 5000000},    {"+14강 워프권", 7500000},
+    {"+15강 워프권", 10000000}, {"깨짐 방지권 x 1", 2100000}, {"깨짐 방지권 x 3", 6000000},
+};
+
+// Forge 정보
+typedef struct
+{
+    char DropItemNames[100];
+    int DropItemCounts;
+    int GuardCounts;
+} ForgeInfo;
+ForgeInfo forgeInfo[MAX_DROP_ITEM_TYPES] = {
+    {"국적불분명 철조각", 8, 1}, {"타우의 뼈 부스러기", 5, 1}, {"빛 바랜 형광물질", 3, 1}, {"스위스산 철조각", 5, 2},
+    {"불꽃마검 손잡이", 2, 1},   {"사악한 영혼", 1, 1},        {"도끼 가루", 3, 5},        {"투명 물질", 4, 11},
+};
 
 // 해당 좌표로 이동
 void GotoXY(int _x, int _y)
@@ -436,5 +450,20 @@ void AddDropItem(const char *itemName, int count)
     {
         playerInfo.dropItemCounts[idx] += count;
         return;
+    }
+
+    // 인벤토리에 없는 새로운 아이템이면 빈 슬롯을 찾아 새로 등록
+    for (int i = 0; i < MAX_DROP_ITEM_TYPES; i++)
+    {
+        if (playerInfo.dropItemNames[i][0] == '\0') // 빈 슬롯 발견
+        {
+            // 이름 복사
+            strncpy(playerInfo.dropItemNames[i], itemName, sizeof(playerInfo.dropItemNames[i]) - 1);
+            playerInfo.dropItemNames[i][sizeof(playerInfo.dropItemNames[i]) - 1] = '\0'; // NULL 추가
+
+            // 개수 저장
+            playerInfo.dropItemCounts[i] = count;
+            return;
+        }
     }
 }
