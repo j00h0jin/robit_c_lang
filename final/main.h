@@ -195,3 +195,35 @@ void DrawImage(const char *imagePath, int x, int y, int maxWidth, int maxHeight)
     DeleteObject(hBitmap);
     ReleaseDC(hwnd, hdc);
 }
+
+// 좌측 마우스가 클릭 되었는지
+BOOL MouseLeftButtonClicked(void)
+{
+    static BOOL wasDown = FALSE;
+    BOOL isDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+    BOOL clicked = isDown && !wasDown;
+    wasDown = isDown;
+    return clicked;
+}
+
+// 마우스의 좌표가 이미지 영역 내에 있는지
+BOOL IsMouseClickOnImage(int imageX, int imageY, int imageWidth, int imageHeight)
+{
+    POINT pt;
+    if (!GetCursorPos(&pt))
+        return FALSE;
+
+    HWND hwnd = GetConsoleWindow();
+    if (hwnd == NULL)
+        return FALSE;
+
+    if (!ScreenToClient(hwnd, &pt))
+        return FALSE;
+
+    int left = imageX * 8 - imageWidth / 2;
+    int top = imageY * 16 - imageHeight / 2;
+    int right = left + imageWidth;
+    int bottom = top + imageHeight;
+
+    return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom;
+}

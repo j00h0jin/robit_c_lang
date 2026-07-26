@@ -31,13 +31,27 @@ int main(void)
 {
     SetConsoleOutputCP(65001); // 인코딩 UTF-8 고정
 
+    // QuickEdit 모드 비활성화
+    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+    if (hIn != INVALID_HANDLE_VALUE)
+    {
+        DWORD mode;
+        if (GetConsoleMode(hIn, &mode))
+        {
+            mode |= ENABLE_EXTENDED_FLAGS;
+            mode &= ~ENABLE_QUICK_EDIT_MODE;
+            SetConsoleMode(hIn, mode);
+        }
+        FlushConsoleInputBuffer(hIn);
+    }
+
     SetConsoleSize(consoleWidth, consoleHeight); // x, y
 
     SetColor(15, 0);
     Clear();
 
-    // StartView();
-    DestroyedView();
+    StartView();
+    // DestroyedView();
 }
 
 void ScreenBar()
@@ -86,6 +100,7 @@ void EnforceButton(int button)
 void StartView()
 {
     snprintf(view, sizeof(view), " ");
+    Clear();
     ScreenBar();
     PrintText("  easy  ", 60, 24);
     PrintText("  hard  ", 120, 24);
@@ -102,7 +117,6 @@ void StartView()
             PrintText("   hard   ", 120, 24);
             level = 1;
         }
-
         if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
         {
             PrintText("   easy   ", 60, 24);
@@ -126,6 +140,53 @@ void StartView()
             }
         }
         Sleep(20);
+    }
+}
+
+void MainView()
+{
+    snprintf(view, sizeof(view), " ");
+    Clear();
+    ScreenBar();
+    PrintText("[ 아이템 창 ]", 22, 9);
+    PrintText("[ 상  점 ]", 157, 9);
+
+    char temp[100];
+
+    int isUpdate = 1;
+
+    while (1)
+    {
+        if (isUpdate)
+        {
+            snprintf(temp, sizeof(temp), "강화비용: %d원", 300);
+            PrintTextLeft(temp, 2, 15);
+            snprintf(temp, sizeof(temp), "판매가격: %d원", 1000000000);
+            PrintTextLeft(temp, 2, 17);
+
+            snprintf(temp, sizeof(temp), "+%d %s", 0, "낡은 단검");
+            PrintCenter(temp, 40, consoleWidth);
+            snprintf(temp, sizeof(temp), "성공률 %d %%", 100);
+            PrintCenter(temp, 42, consoleWidth);
+
+            BottomBar(0, 0);
+
+            isUpdate = 0;
+        }
+        ScreenBarButton(1, 1);
+        EnforceButton(1);
+        DrawImage("asset/sword_0.bmp", 90, 23, 600, 350);
+        ScreenBarButton(1, 1);
+        EnforceButton(1);
+        DrawImage("asset/sword_0.bmp", 90, 23, 600, 350);
+
+        if (MouseLeftButtonClicked() && IsMouseClickOnImage(22, 6, 75, 75))
+        {
+            ForgeView();
+            return;
+        }
+
+        Sleep(30);
     }
 }
 
@@ -170,45 +231,6 @@ void DestroyedView()
         }
         ScreenBarButton(0, 1);
         EnforceButton(1);
-
-        Sleep(30);
-    }
-}
-
-void MainView()
-{
-    snprintf(view, sizeof(view), " ");
-    Clear();
-    ScreenBar();
-    PrintText("[ 아이템 창 ]", 22, 9);
-    PrintText("[ 상  점 ]", 157, 9);
-
-    char temp[100];
-
-    int isUpdate = 1;
-
-    while (1)
-    {
-        if (isUpdate)
-        {
-            snprintf(temp, sizeof(temp), "강화비용: %d원", 300);
-            PrintTextLeft(temp, 2, 15);
-            snprintf(temp, sizeof(temp), "판매가격: %d원", 1000000000);
-            PrintTextLeft(temp, 2, 17);
-
-            snprintf(temp, sizeof(temp), "+%d %s", 0, "낡은 단검");
-            PrintCenter(temp, 40, consoleWidth);
-            snprintf(temp, sizeof(temp), "성공률 %d %%", 100);
-            PrintCenter(temp, 42, consoleWidth);
-
-            BottomBar(0, 0);
-
-            isUpdate = 0;
-        }
-
-        ScreenBarButton(1, 1);
-        EnforceButton(1);
-        DrawImage("asset/sword_0.bmp", 90, 23, 600, 350);
 
         Sleep(30);
     }
