@@ -32,72 +32,73 @@ int currentEnhanceIndex = 0;
 int LoadHardCsv(char *path)
 {
     FILE *fp = fopen(path, "r");
-    if (!fp)
+    if (!fp) // 예외(NULL)
         return 0;
 
     char line[200];
-    if (!fgets(line, sizeof(line), fp))
+    if (!fgets(line, sizeof(line), fp)) // 1줄 스킵, 스킵 후 비었을 경우 아래 조건문
     {
         fclose(fp);
         return 0;
     }
 
     int count = 0;
-    while (fgets(line, sizeof(line), fp) && count < MAX_ENHANCE_ITEMS)
+    // 파일 끝 or MAX_ENHANCE_ITEMS까지 while
+    while (fgets(line, sizeof(line), fp) && count < MAX_ENHANCE_ITEMS) // MAX_ENHANCE_ITEMS = 30
     {
         char *fields[7];
-        ParseCsvFields(line, fields, 7);
+        ParseCsvFields(line, fields, 7); // 7 fields로 쪼개기
 
-        if (fields[0] == NULL || fields[0][0] == '\0')
+        if (fields[0] == NULL || fields[0][0] == '\0') // 빈 값이면 skip
             continue;
 
-        EnhanceItem *item = &enhanceItems[count];
-        item->step = ParseNumber(fields[0]);
+        EnhanceItem *item = &enhanceItems[count]; // 구조체 포인터 선언(여기다 저장)
+        item->step = ParseNumber(fields[0]);      // 단계 저장
 
-        if (fields[1])
+        if (fields[1]) // 이름 저장
         {
             TrimQuotes(fields[1]);
             strncpy(item->name, fields[1], sizeof(item->name) - 1);
-            item->name[sizeof(item->name) - 1] = '\0';
+            item->name[sizeof(item->name) - 1] = '\0'; // NULL 자리
         }
         else
         {
-            item->name[0] = '\0';
+            item->name[0] = '\0'; // NULL 추가
         }
 
-        item->cost = fields[2] ? ParseNumber(fields[2]) : 0;
-        item->successRate = fields[3] ? ParsePercent(fields[3]) : 0;
-        item->price = fields[4] ? ParseNumber(fields[4]) : 0;
+        item->cost = fields[2] ? ParseNumber(fields[2]) : 0;         // 강화 비용
+        item->successRate = fields[3] ? ParsePercent(fields[3]) : 0; // 강화 확률
+        item->price = fields[4] ? ParseNumber(fields[4]) : 0;        // 판매 가격
         if (fields[5])
         {
-            TrimQuotes(fields[5]);
-            if (strstr(fields[5], "방지권불가") != NULL)
+            TrimQuotes(fields[5]);                       // 방지권 소모 개수
+            if (strstr(fields[5], "방지권불가") != NULL) // "방지권불가"인 경우 -1
                 item->guardCost = -1;
             else
                 item->guardCost = ParseNumber(fields[5]);
         }
         else
         {
-            item->guardCost = 0;
+            item->guardCost = 0; // - 인 경우
         }
 
-        if (fields[6])
+        if (fields[6]) // 드랍 아이템
         {
             TrimQuotes(fields[6]);
-            strncpy(item->dropItem, fields[6], sizeof(item->dropItem) - 1);
+            strncpy(item->dropItem, fields[6], sizeof(item->dropItem) - 1); // NULL 자리
             item->dropItem[sizeof(item->dropItem) - 1] = '\0';
-            if (strcmp(item->dropItem, "-") == 0)
+            if (strcmp(item->dropItem, "-") == 0) // - 인 경우 \0
                 item->dropItem[0] = '\0';
         }
         else
         {
-            item->dropItem[0] = '\0';
+            item->dropItem[0] = '\0'; // 비었을 경우
         }
 
         count++;
     }
 
-    fclose(fp);
+    fclose(fp); // 닫기
     enhanceItemCount = count;
     return 1;
 }
@@ -105,40 +106,41 @@ int LoadHardCsv(char *path)
 int LoadEasyPercent(char *path)
 {
     FILE *fp = fopen(path, "r");
-    if (!fp)
+    if (!fp) // 예외(NULL)
         return 0;
 
     char line[200];
-    if (!fgets(line, sizeof(line), fp))
+    if (!fgets(line, sizeof(line), fp)) // 첫 줄 스킵, 스킵 후 파일 끝이라면 아래 조건문
     {
         fclose(fp);
         return 0;
     }
 
     int idx = 0;
+    // 파일 끝까지 enhanceItemCount만큼 반복(둘 중 하나가 끝에 도달할 때까지)
     while (fgets(line, sizeof(line), fp) && idx < enhanceItemCount)
     {
         char *fields[1];
-        ParseCsvFields(line, fields, 1);
-        if (fields[0] && fields[0][0] != '\0')
+        ParseCsvFields(line, fields, 1);       // 데이터 내 따옴표나 콤마 등 제거하여 저장
+        if (fields[0] && fields[0][0] != '\0') // fields[0] 널이 아니면서 [0][0]이 빈 문자열이 아닐 때
         {
             int percent = ParsePercent(fields[0]);
-            if (percent > 0)
+            if (percent > 0) // percent가 양수일 경우 successRate에 저장
                 enhanceItems[idx].successRate = percent;
         }
         idx++;
     }
 
-    fclose(fp);
+    fclose(fp); // 닫기
     return 1;
 }
 
-void LoadEnhanceData(int mode)
+void LoadEnhanceData(int mode) // 1, 2
 {
-    if (!LoadHardCsv("csv/hard.csv"))
+    if (!LoadHardCsv("csv/hard.csv")) // hard 모드 기본
         return;
 
-    if (mode == 1)
+    if (mode == 1) // easy인 경우 확률 덮어쓰기
         LoadEasyPercent("csv/easy_percent.csv");
 }
 
