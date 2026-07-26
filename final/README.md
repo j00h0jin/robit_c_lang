@@ -18,6 +18,16 @@ gcc main.c -o main.exe -lgdi32 -lmsimg32
 start conhost main.exe
 ```
 
+<img width="707" height="94" alt="image" src="https://github.com/user-attachments/assets/ab6bd1bb-4c3f-4306-91e8-1459567c9c03" />
+
+<img width="1443" height="841" alt="image" src="https://github.com/user-attachments/assets/13af48c1-b862-4fc3-9bc0-e45b902f9fd3" />
+
+시간이 없어서 반응형으로 짜지 않았다. 만약 노트북 화면이 작다면 모니터가 좀 더 큰 환경에서 돌려야 문제가 없을 듯하다.
+
+---
+
+
+
 ## AI활용 보고서
 
 ### gemini, copliot
