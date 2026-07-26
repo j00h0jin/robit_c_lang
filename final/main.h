@@ -233,7 +233,7 @@ BOOL MouseLeftButtonClicked(void)
     return clicked;
 }
 
-// 마우스의 좌표가 텍스트 위치에 있는지
+// 마우스의 좌표가 텍스트 위치에 있는지(PrintTextLeft 기준)
 BOOL IsMouseClickOnText(int textX, int textY, const char *text)
 {
     POINT pt;
@@ -323,27 +323,32 @@ int IsViewStackEmpty(void)
 // csv
 void TrimQuotes(char *str)
 {
-    char *start = str; // 문자열의 시작
-    while (*start == ' ')
+    char *start = str;    // 문자열의 시작
+    while (*start == ' ') // 시작 공백인 경우 공백 전부 스킵
         start++;
 
-    char *end = start + strlen(start) - 1;
+    char *end = start + strlen(start) - 1; // 끝
+
+    // 뒷부분이 공백, 탭, \r, \n 인 경우 '\0'로 덮어쓰기
     while (end >= start && (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n'))
     {
         *end = '\0';
         end--;
     }
 
+    // 큰 따옴표 없애기
     if (*start == '"' && end > start && *end == '"')
     {
         start++;
         *end = '\0';
     }
-
+    // strcpy를 쓰면 메모리 오염이 있을 수 있기 때문에 memmove를 사용
+    // 메모리 영역이 겹쳐있을 경우 strcpy 사용 시 데이터가 덮어씌워질 수 있음
     if (start != str)
         memmove(str, start, strlen(start) + 1);
 }
 
+// 숫자 추출
 int ParseNumber(const char *text)
 {
     int value = 0;
@@ -354,12 +359,15 @@ int ParseNumber(const char *text)
         {
             found = 1;
             value = value * 10 + (*text - '0');
+            // 자릿수 밀어내고 숫자 추가, ASCII '0': 48 ~
+            // ex 48 => 480(48*10) + 5
         }
         text++;
     }
-    return found ? value : 0;
+    return found ? value : 0; // 숫자가 없었다면 0, 있었다면 value
 }
 
+// 숫자 추출
 int ParsePercent(const char *text)
 {
     int value = 0;
@@ -383,28 +391,29 @@ void ParseCsvFields(char *line, char *fields[], int maxFields)
 
     while (idx < maxFields && *p)
     {
-        if (*p == '"')
+        if (*p == '"') // 큰따옴표로 시작하는 경우
         {
-            p++;
+            p++; // 큰따옴표 스킵
             fields[idx++] = p;
-            while (*p && !(*p == '"' && (p[1] == ',' || p[1] == '\0')))
+            while (*p && // 문자열 끝이 아니면서 닫는 큰따옴표를 만난 게 아니라면
+                   !(*p == '"' && (*(p + 1) == ',' || *(p + 1) == '\0')))
                 p++;
-            if (*p == '"')
+            if (*p == '"') // 큰따옴표 닫힘이므로 NULL 대체
                 *p++ = '\0';
-            if (*p == ',')
+            if (*p == ',') // 큰따옴표가 닫히기 전이라면 콤마 스킵
                 p++;
         }
-        else
+        else // 큰따옴표로 시작하는 게 아니면
         {
             fields[idx++] = p;
             while (*p && *p != ',')
                 p++;
-            if (*p == ',')
+            if (*p == ',') // 다음 필드로 넘어가는 콤마이므로 NULL 대체
                 *p++ = '\0';
         }
     }
 
-    while (idx < maxFields)
+    while (idx < maxFields) // 예외 처리(csv 필드 수가 maxFields보다 적은 경우)
         fields[idx++] = NULL;
 }
 // csv
@@ -429,6 +438,7 @@ void AddDropItem(const char *itemName, int count)
     if (itemName == NULL || itemName[0] == '\0' || count <= 0)
         return;
 
+    // 해당 아이템 슬롯의 개수를 증가시킴(아이템 슬롯에 있는 경우)
     int idx = GetDropItemIndex(itemName);
     if (idx >= 0)
     {

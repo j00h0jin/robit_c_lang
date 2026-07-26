@@ -150,6 +150,8 @@ int main(void)
     SetConsoleOutputCP(65001); // 인코딩 UTF-8 고정
 
     // QuickEdit 모드 비활성화
+    // 마우스 이벤트 후 키보드 입력을 받아야 넘어가지는 버그가 있었는데
+    // 이를 제거해주는 설정이라고 함
     HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
     if (hIn != INVALID_HANDLE_VALUE)
     {
@@ -264,6 +266,7 @@ void StartView()
         }
         if (GetAsyncKeyState(VK_RETURN) & 0x8000)
         {
+            // level에 따라 csv에서 읽어오는 난이도가 달라짐
             switch (level)
             {
             case 1: // easy
@@ -289,12 +292,14 @@ void MainView()
     // 가변 텍스트를 출력하기 위한 임시 문자열
     char temp[100];
     // 페이지가 바뀌면 isUpdate는 항상 1 (모든 페이지)
+    // 만약 정보 갱신이 생기는 이벤트가 있다면 isUpdate를 1로 지정하여 화면을 재출력하게 함
     int isUpdate = 1;
 
     while (1)
     {
         if (isUpdate)
         {
+            // UI 부분
             Clear();
             ScreenBar();
 
@@ -325,20 +330,22 @@ void MainView()
 
             isUpdate = 0;
         }
-        if (currentEnhanceIndex == 0)
+        if (currentEnhanceIndex == 0) // 강화 0강일 경우 양쪽 버튼 보이기
         {
             ScreenBarButton(1, 1);
         }
-        else
+        else // 아니면 오른쪽만
         {
             ScreenBarButton(0, 1);
         }
+        // asset에 강화 단계에 따른 이미지 별 출력
         char imagePath[100];
         snprintf(imagePath, sizeof(imagePath), "asset/sword_%d.bmp", currentEnhanceIndex);
         DrawImage(imagePath, 90, 23, 600, 350);
-        EnforceButton(1);
+        EnforceButton(1); // 강화 버튼 이미지 보이기
 
         BOOL clicked = MouseLeftButtonClicked();
+        // 클릭 + 현재 강화 단계가 0 이라면 왼쪽 Forge 오른쪽 Shop으로 이동
         if (clicked && IsMouseClickOnImage(22, 6, 75, 75) && currentEnhanceIndex == 0)
         {
             PushView(ForgeView);
@@ -350,41 +357,43 @@ void MainView()
             return;
         }
 
+        // 강화 단계 1단계 이상일 경우 shop 이동 자리에 판매버튼으로 대체됨
         if (clicked && IsMouseClickOnImage(157, 6, 75, 75) && currentEnhanceIndex > 0)
         {
             EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
-            playerInfo.money += item->price;
-            currentEnhanceIndex = 0;
+            playerInfo.money += item->price; // 판매금액만큼 추가
+            currentEnhanceIndex = 0;         // 팔았으므로 0단계로
             isUpdate = 1;
             continue;
         }
 
+        // 강화 버튼
         if (clicked && IsMouseClickOnImage(152, 24, 150, 150))
         {
             EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
-            if (playerInfo.money < item->cost)
+            if (playerInfo.money < item->cost) // 소지 금액 < 강화 비용
             {
                 continue;
             }
 
-            playerInfo.money -= item->cost;
-            int random = rand() % 100 + 1;
-            if (random <= (item->successRate))
+            playerInfo.money -= item->cost;    // 강화 금액만큼 차감
+            int random = rand() % 100 + 1;     // 1 ~ 100
+            if (random <= (item->successRate)) // random < 성공확률
             {
-                if (currentEnhanceIndex < enhanceItemCount - 1)
+                if (currentEnhanceIndex < enhanceItemCount - 1) // 최대강화 수가 아니면
                 {
-                    currentEnhanceIndex++;
+                    currentEnhanceIndex++; // 단계 +1
                     isUpdate = 1;
                 }
             }
-            else
+            else // 실패
             {
-                PushView(DestroyedView);
+                PushView(DestroyedView); // destroyed로 이동
                 return;
             }
             continue;
         }
-
+        // 과연산 방지(while문에 다 넣었으므로 아래 설명 생략)
         Sleep(30);
     }
 }
@@ -400,7 +409,7 @@ void DestroyedView()
 
     EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
     if (item->dropItem[0] != '\0')
-        dropCount = rand() % 10;
+        dropCount = rand() % 10; // 0~9개 랜덤 드롭
 
     while (1)
     {
@@ -411,19 +420,19 @@ void DestroyedView()
             PrintText("[ 살리기 ]", 157, 9);
             BottomBar(playerInfo.guard, playerInfo.money);
 
-            if (item->dropItem[0] != '\0') // 드랍 아이템이 있다면
+            if (item->dropItem[0] != '\0') // 드랍 아이템이 있다면 출력
             {
                 snprintf(dropText, sizeof(dropText), "%s %3d 개 줍기", item->dropItem, dropCount);
                 PrintTextLeft(dropText, 10, 17);
             }
 
-            if (item->guardCost > 0)
+            if (item->guardCost > 0) // 방지권으로 살릴 수 있는 아이템이면 출력
             {
                 PrintTextLeft("방지권으로 살리기 버튼을 눌러 살릴 수 있습니다.", 10, 9);
                 snprintf(temp, sizeof(temp), "%s: 방지권 %d개 소모", item->name, item->guardCost);
                 PrintTextLeft(temp, 10, 11);
             }
-
+            // ASCII 아트
             PrintTextLeft(" ████ █   █  ███  ████  ████     █   █  ███   ████    ████  █████  ████ █████ ████   ███  █ "
                           "  █ █████ ████  ",
                           10, y);
@@ -446,17 +455,18 @@ void DestroyedView()
         EnforceButton(1);
 
         BOOL clicked = MouseLeftButtonClicked();
+        // 드랍 텍스트 클릭 시(드랍 아이템이 있는 경우)
         if (clicked && IsMouseClickOnText(10, 17, dropText) && item->dropItem[0] != '\0')
         {
-            AddDropItem(item->dropItem, dropCount);
-            dropCount = 0;
-            // dropText[0] = '\0';
+            AddDropItem(item->dropItem, dropCount); // 아이템 칸에 추가
+            dropCount = 0;                          // 습득했으므로 drop count는 0
             isUpdate = 1;
             continue;
         }
-
+        // 방지권 눌렀을 때
         if (clicked && IsMouseClickOnImage(157, 6, 75, 75))
         {
+            // 방지권이 필요 방지권보다 같거나 크면서 해당 아이템이 방지권 사용 가능할 때
             if (playerInfo.guard >= item->guardCost && item->guardCost > 0)
             {
                 playerInfo.guard -= item->guardCost;
@@ -465,6 +475,7 @@ void DestroyedView()
             }
         }
 
+        // 오른쪽 큰 버튼을 누르면 0강으로 돌아감
         if (clicked && IsMouseClickOnImage(152, 24, 150, 150))
         {
             currentEnhanceIndex = 0;
@@ -581,7 +592,7 @@ void EtcView()
     Clear();
     PrintText("[ 나가기 ]", 157, 9);
 
-    int isUpdate = 1, x = 10;
+    int isUpdate = 1;
     char temp[100];
     char dropNames[MAX_DROP_ITEM_TYPES][50] = {{0}};
     int dropCount = 0;
@@ -591,33 +602,34 @@ void EtcView()
     // hard.csv의 모든 드랍 아이템 이름을 고유하게 수집
     for (int i = 0; i < enhanceItemCount && dropCount < MAX_DROP_ITEM_TYPES; i++)
     {
-        const char *name = enhanceItems[i].dropItem;
+        const char *name = enhanceItems[i].dropItem; // 드랍 아이템이 비어있는 경우 skip
         if (name == NULL || name[0] == '\0')
             continue;
 
         int found = 0;
-        for (int j = 0; j < dropCount; j++)
+        for (int j = 0; j < dropCount; j++) // drop names에 추가된 적 있는지 확인
         {
-            if (strcmp(dropNames[j], name) == 0)
+            if (strcmp(dropNames[j], name) == 0) // 있다면 break
             {
                 found = 1;
                 break;
             }
         }
-        if (!found)
+        if (found == 0) // 추가된 적 없으면 추가
         {
-            strncpy(dropNames[dropCount], name, sizeof(dropNames[dropCount]) - 1);
-            dropNames[dropCount][sizeof(dropNames[dropCount]) - 1] = '\0';
-            dropCount++;
+            strncpy(dropNames[dropCount], name, sizeof(dropNames[dropCount]) - 1); // NULL 자리
+            dropNames[dropCount][sizeof(dropNames[dropCount]) - 1] = '\0';         // 마지막 NULL 추가
+            dropCount++;                                                           // 추가되었으므로 drop count +1
         }
     }
 
+    // 보유 수량 출력
     for (int i = 0; i < dropCount; i++)
     {
         int idx = GetDropItemIndex(dropNames[i]);
         int count = idx >= 0 ? playerInfo.dropItemCounts[idx] : 0;
         snprintf(temp, sizeof(temp), "%s: %d개", dropNames[i], count);
-        PrintTextLeft(temp, x, 15 + 3 * i);
+        PrintTextLeft(temp, 10, 15 + 3 * i);
     }
 
     while (1)
@@ -627,9 +639,9 @@ void EtcView()
             BottomBar(playerInfo.guard, playerInfo.money);
             isUpdate = 0;
         }
-        ScreenBarButton(0, 1);
+        ScreenBarButton(0, 1); // 우측 상탄 버튼 이미지 표시
 
-        // 우측 상단(나가기) 버튼 클릭 시 현재 뷰 팝
+        // 우측 상단(나가기) 버튼 클릭 시 팝
         BOOL clicked = MouseLeftButtonClicked();
         if (clicked && IsMouseClickOnImage(157, 6, 75, 75))
         {
