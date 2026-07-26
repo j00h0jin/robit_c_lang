@@ -1,6 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <windows.h>
+
+// 강화 아이템 구조체(csv 파일 받는)
+#define MAX_ENHANCE_ITEMS 30
+#define MAX_DROP_ITEM_TYPES 8
+
+typedef struct
+{
+    int step;
+    char name[50];
+    int cost;
+    int successRate;
+    int price;
+    int guardCost;
+    char dropItem[50];
+} EnhanceItem;
+EnhanceItem enhanceItems[MAX_ENHANCE_ITEMS];
+
+// User 정보
+typedef struct
+{
+    int money;
+    int guard;
+    char dropItemNames[MAX_DROP_ITEM_TYPES][100];
+    int dropItemCounts[MAX_DROP_ITEM_TYPES];
+} UserInfo;
+
+UserInfo playerInfo = {1000000, 0, {{0}}, {0}}; // init
 
 // 해당 좌표로 이동
 void GotoXY(int _x, int _y)
@@ -10,25 +39,14 @@ void GotoXY(int _x, int _y)
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
 
-COORD GetXY(void)
-{
-
-    COORD pos;
-    CONSOLE_SCREEN_BUFFER_INFO curInfor;
-
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &curInfor);
-    pos.X = curInfor.dwCursorPosition.X;
-    pos.Y = curInfor.dwCursorPosition.Y;
-
-    return pos;
-}
-
 // 화면 비우기
 void Clear(void)
 {
     system("cls");
 }
 
+// 기본 세팅값
+// 콘솔 제목
 void SetTitle(void)
 {
     // UTF-16 지정 (제목만)
@@ -45,12 +63,11 @@ void SetColor(unsigned char _BgColor, unsigned char _TextColor)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), ColorNum);
 }
 
+// 콘솔 커서 on off
 void MySetCursor(BOOL _bShow)
 {
-
     CONSOLE_CURSOR_INFO curInfor;
-    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &curInfor);
-
+    curInfor.dwSize = 1;
     curInfor.bVisible = _bShow;
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &curInfor);
 }
@@ -62,7 +79,9 @@ void SetConsoleSize(int _col, int _lines)
     snprintf(setText, sizeof(setText), "mode con cols=%d lines=%d", _col, _lines);
     system(setText);
 }
+// 기본 세팅값
 
+// 출력
 // 문자열 칸 수 구하기
 int GetDisplayWidth(const char *str)
 {
@@ -173,20 +192,20 @@ void DrawImage(const char *imagePath, int x, int y, int maxWidth, int maxHeight)
     int targetHeight = maxHeight;
 
     // 원본의 비율을 지키면서 박스 안에서 최대 크기로 설정함
-    if (bm.bmWidth * maxHeight > bm.bmHeight * maxWidth)
+    if (bm.bmWidth * maxHeight > bm.bmHeight * maxWidth) // 가로(width)가 더 긴 경우
     {
-        targetWidth = maxWidth;
-        targetHeight = (bm.bmHeight * maxWidth) / bm.bmWidth;
+        targetWidth = maxWidth;                               // 가로폭을 박스 최대 크기에 맞춘 뒤
+        targetHeight = (bm.bmHeight * maxWidth) / bm.bmWidth; // 가로폭 비율에 맞게 세로폭 조정
     }
-    else
+    else // 세로(height)가 더 긴 경우
     {
-        targetHeight = maxHeight;
-        targetWidth = (bm.bmWidth * maxHeight) / bm.bmHeight;
+        targetHeight = maxHeight;                             // 세로폭을 최대로 맞추고
+        targetWidth = (bm.bmWidth * maxHeight) / bm.bmHeight; // 가로폭은 비율에 맞게
     }
 
-    // 이미지 픽셀 -> 좌표화
-    int pixelX = x * 8;
-    int pixelY = y * 16;
+    // 좌표로 받아서 픽셀값으로 바꾸기
+    int pixelX = x * 8;  // 칸 당 8픽셀
+    int pixelY = y * 16; // 칸 당 16픽셀
 
     int drawX = pixelX - (targetWidth / 2);
     int drawY = pixelY - (targetHeight / 2);
@@ -201,7 +220,9 @@ void DrawImage(const char *imagePath, int x, int y, int maxWidth, int maxHeight)
     DeleteObject(hBitmap);
     ReleaseDC(hwnd, hdc);
 }
+// 출력
 
+// 마우스 event
 // 좌측 마우스가 클릭 되었는지
 BOOL MouseLeftButtonClicked(void)
 {
@@ -210,6 +231,29 @@ BOOL MouseLeftButtonClicked(void)
     BOOL clicked = isDown && !wasDown;
     wasDown = isDown;
     return clicked;
+}
+
+// 마우스의 좌표가 텍스트 위치에 있는지
+BOOL IsMouseClickOnText(int textX, int textY, const char *text)
+{
+    POINT pt;
+    if (!GetCursorPos(&pt))
+        return FALSE;
+
+    HWND hwnd = GetConsoleWindow();
+    if (hwnd == NULL)
+        return FALSE;
+
+    if (!ScreenToClient(hwnd, &pt))
+        return FALSE;
+
+    int textWidth = GetDisplayWidth(text);
+    int left = textX * 8;
+    int top = textY * 16;
+    int right = left + textWidth * 8;
+    int bottom = top + 16;
+
+    return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom;
 }
 
 // 마우스의 좌표가 이미지 영역 내에 있는지
@@ -226,6 +270,7 @@ BOOL IsMouseClickOnImage(int imageX, int imageY, int imageWidth, int imageHeight
     if (!ScreenToClient(hwnd, &pt))
         return FALSE;
 
+    // 좌표(픽셀값)는 DrawImage에서 참고
     int left = imageX * 8 - imageWidth / 2;
     int top = imageY * 16 - imageHeight / 2;
     int right = left + imageWidth;
@@ -233,6 +278,7 @@ BOOL IsMouseClickOnImage(int imageX, int imageY, int imageWidth, int imageHeight
 
     return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom;
 }
+// 마우스 event
 
 // view stack
 typedef struct ViewNode
@@ -273,3 +319,120 @@ int IsViewStackEmpty(void)
     return viewStackTop == NULL; // 스택이 비어있으면 1, 아니면 0
 }
 // view stack
+
+// csv
+void TrimQuotes(char *str)
+{
+    char *start = str; // 문자열의 시작
+    while (*start == ' ')
+        start++;
+
+    char *end = start + strlen(start) - 1;
+    while (end >= start && (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n'))
+    {
+        *end = '\0';
+        end--;
+    }
+
+    if (*start == '"' && end > start && *end == '"')
+    {
+        start++;
+        *end = '\0';
+    }
+
+    if (start != str)
+        memmove(str, start, strlen(start) + 1);
+}
+
+int ParseNumber(const char *text)
+{
+    int value = 0;
+    int found = 0;
+    while (*text)
+    {
+        if (*text >= '0' && *text <= '9')
+        {
+            found = 1;
+            value = value * 10 + (*text - '0');
+        }
+        text++;
+    }
+    return found ? value : 0;
+}
+
+int ParsePercent(const char *text)
+{
+    int value = 0;
+    int found = 0;
+    while (*text)
+    {
+        if (*text >= '0' && *text <= '9')
+        {
+            found = 1;
+            value = value * 10 + (*text - '0');
+        }
+        text++;
+    }
+    return found ? value : 0;
+}
+
+void ParseCsvFields(char *line, char *fields[], int maxFields)
+{
+    int idx = 0;
+    char *p = line;
+
+    while (idx < maxFields && *p)
+    {
+        if (*p == '"')
+        {
+            p++;
+            fields[idx++] = p;
+            while (*p && !(*p == '"' && (p[1] == ',' || p[1] == '\0')))
+                p++;
+            if (*p == '"')
+                *p++ = '\0';
+            if (*p == ',')
+                p++;
+        }
+        else
+        {
+            fields[idx++] = p;
+            while (*p && *p != ',')
+                p++;
+            if (*p == ',')
+                *p++ = '\0';
+        }
+    }
+
+    while (idx < maxFields)
+        fields[idx++] = NULL;
+}
+// csv
+
+int GetDropItemIndex(const char *itemName)
+{
+    // itemName이 비어있다면 -1
+    if (itemName == NULL || itemName[0] == '\0')
+        return -1;
+
+    for (int i = 0; i < MAX_DROP_ITEM_TYPES; i++)
+    {
+        // 아이템 슬롯이 비어있지 않고 얻은 아이템과 아이템 슬롯의 이름이 같은 경우 해당 슬롯 인덱스 반환
+        if (playerInfo.dropItemNames[i][0] != '\0' && strcmp(playerInfo.dropItemNames[i], itemName) == 0)
+            return i;
+    }
+    return -1;
+}
+
+void AddDropItem(const char *itemName, int count)
+{
+    if (itemName == NULL || itemName[0] == '\0' || count <= 0)
+        return;
+
+    int idx = GetDropItemIndex(itemName);
+    if (idx >= 0)
+    {
+        playerInfo.dropItemCounts[idx] += count;
+        return;
+    }
+}
