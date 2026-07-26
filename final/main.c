@@ -202,11 +202,14 @@ void MainView()
             {
 
                 PrintText("[ 조합소 ]", 22, 9);
-                PrintText("[ 상  점 ]", 157, 9);
+                PrintText("[ 상점 ]", 157, 9);
+            }
+            else if (currentEnhanceIndex == 28)
+            {
+                PrintText("[ 판매불가 ]", 157, 9);
             }
             else
             {
-
                 PrintText("[ 판매 ]", 157, 9);
             }
             snprintf(temp, sizeof(temp), "강화비용: %d원", item->cost);
@@ -253,6 +256,10 @@ void MainView()
         // 강화 단계 1단계 이상일 경우 shop 이동 자리에 판매버튼으로 대체됨
         if (clicked && IsMouseClickOnImage(157, 6, 75, 75) && currentEnhanceIndex > 0)
         {
+            if (currentEnhanceIndex == 28) // 28단계는 판매 불가
+            {
+                continue;
+            }
             EnhanceItem *item = &enhanceItems[currentEnhanceIndex];
             playerInfom->money += item->price; // 판매금액만큼 추가
             currentEnhanceIndex = 0;           // 팔았으므로 0단계로
